@@ -8,6 +8,7 @@ gppm is aimed to be used with llama.cpp and NVIDIA P40 GPUs. Currently llama.cpp
 ## Table of Contents
 
 - [Installation](#installation)
+- [Basic configuration](#basic-configuration)
 - [Usage](#usage)
 
 ## Installation
