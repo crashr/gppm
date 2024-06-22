@@ -1,0 +1,6 @@
+gppmd_config.yaml
+gppm_config.yaml
+*.swp
+src
+debian
+.env
