@@ -1,10 +1,10 @@
-# gppm
+# gppm alpha)
 GPU Power and Performance Manager
-
-**Status:** Alpha
 
 gppm is aimed to be used with llama.cpp and NVIDIA P40 GPUs. Currently llama.cpp doesn't provide functionality to reduce the power consumption of P40s in idle mode. This is where gppm jumps in. gppm monitors llama.cpp's output and accordingly changes the performance modes of installed P40s. gppm is in its alpha phase, meaning it is in active development and not yet feature-complete. I welcome feedback and contributions.
 
+See a demo of gppm forcing idle power consumption of a Testla P40 to 10 Watt instead of 50 Watt with only llama.cpp [gppm demo](screencast01.mkv)
+  
 ## Table of Contents
 
 - [Installation](#installation)
@@ -60,10 +60,3 @@ To see the effect, in another terminal run this:
 watch -n0.1 nvidia-smi
 ```
 and run inference.
-
-
-## Demo
-
-Watch the demo video below:
-
-[gppm demo](screencast01.mkv)
