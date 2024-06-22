@@ -38,13 +38,24 @@ To get started with gppm, follow these steps:
     cd gppm
     ```
 2. **Change log_file_to_monitor**:
-    Set log_file_to_monitor to a path that gppm can read from and llama.cpp can write to
+   
+    Set log_file_to_monitor to a path that gppm can read from and llama.cpp can write to.
 
 
 ## Usage
 
-To run gppm, use the following command:
+Run llama.cpp like this:
+```sh
+llama-server <YOU OPTIONS> --log-format text >> /path/to/llama-server.log
+```
+
+When llama.cpp is up and running, use the following command to run gppm:
 
 ```sh
-python3 gppmd.py
+python3 gppmd.py --config gppmd_config.yaml
 ```
+To see the effect, in another terminal run this:
+```sh
+watch -n0.1 nvidia-smi
+```
+and run inference.
