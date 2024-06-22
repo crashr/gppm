@@ -37,7 +37,9 @@ To get started with gppm, follow these steps:
     cp gppmd_config.yaml.example gppmd_config.yaml
     cd gppm
     ```
-2. **Set log_file_to_monitor to a path that gppm can read from and llama.cpp can write to**:
+2. **Change log_file_to_monitor**:
+    Set log_file_to_monitor to a path that gppm can read from and llama.cpp can write to
+
 
 ## Usage
 
@@ -45,3 +47,4 @@ To run gppm, use the following command:
 
 ```sh
 python3 gppmd.py
+```
