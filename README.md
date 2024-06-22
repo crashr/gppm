@@ -47,7 +47,7 @@ To get started with gppm, follow these steps:
 
 Run llama.cpp like this:
 ```sh
-llama-server <YOU OPTIONS> --log-format text >> /path/to/llama-server.log
+llama-server <OTHER OPTIONS> --log-format text >> /path/to/llama-server.log
 ```
 
 When llama.cpp is up and running, use the following command to run gppm:
