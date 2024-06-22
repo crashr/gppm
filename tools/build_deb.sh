@@ -29,8 +29,24 @@ echo "Essential: no" >> $DEST_DIR/DEBIAN/control
 echo "Maintainer: $MAINTAINER" >> $DEST_DIR/DEBIAN/control
 echo "Description: $DESCRIPTION" >> $DEST_DIR/DEBIAN/control
 
+# Create the postinst script
+cat > $DEST_DIR/DEBIAN/postinst <<EOF
+#!/bin/sh
+set -e
+
+case "\$1" in
+  configure)
+    systemctl daemon-reload
+    ;;
+  *)
+    ;;
+esac
+EOF
+
+chmod +x $DEST_DIR/DEBIAN/postinst
+
 # Create the trigger file
-echo "systemctl daemon-reload" > $DEST_DIR/DEBIAN/triggers
+#echo "systemctl daemon-reload" > $DEST_DIR/DEBIAN/triggers
 
 # Create a virtual environment and install dependencies
 python3 -m venv $DEST_DIR/usr/local/lib/$PACKAGE_NAME/venv
@@ -64,7 +80,7 @@ echo "" >> $DEST_DIR/lib/systemd/system/${PACKAGE_NAME}d.service
 echo "[Install]" >> $DEST_DIR/lib/systemd/system/${PACKAGE_NAME}d.service
 echo "WantedBy=multi-user.target" >> $DEST_DIR/lib/systemd/system/${PACKAGE_NAME}d.service
 
-sudo chown -R root:root $DEST_DIR
+#sudo chown -R root:root $DEST_DIR
 
 # Build the package
 dpkg-deb --build $DEST_DIR
