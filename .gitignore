@@ -4,3 +4,6 @@ gppm_config.yaml
 src
 debian
 .env
+*.spec
+debian
+build
