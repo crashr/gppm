@@ -2,7 +2,7 @@
 
 # Replace these variables with your own
 PACKAGE_NAME="gppm"
-VERSION="1.0.0"
+VERSION="alpha"
 MAINTAINER="Roni <noname@nowhere.com>"
 DESCRIPTION="GPU Power and Performance Manager"
 ARCHITECTURE="amd64"
