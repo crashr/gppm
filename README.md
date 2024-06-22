@@ -31,6 +31,14 @@ To get started with gppm, follow these steps:
     pip install -r requirements.txt
     ```
 
+## Basic configuration
+1. **Copy configuration example**:
+    ```sh
+    cp gppmd_config.yaml.example gppmd_config.yaml
+    cd gppm
+    ```
+2. **Set log_file_to_monitor to a path that gppm can read from and llama.cpp can write to**:
+
 ## Usage
 
 To run gppm, use the following command:
