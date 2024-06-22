@@ -2,7 +2,7 @@
 
 # Replace these variables with your own
 PACKAGE_NAME="gppm"
-VERSION="alpha"
+VERSION="0.0.0"
 MAINTAINER="Roni <noname@nowhere.com>"
 DESCRIPTION="GPU Power and Performance Manager"
 ARCHITECTURE="amd64"
@@ -63,6 +63,8 @@ echo "SyslogIdentifier=gppmd" >> $DEST_DIR/lib/systemd/system/${PACKAGE_NAME}d.s
 echo "" >> $DEST_DIR/lib/systemd/system/${PACKAGE_NAME}d.service
 echo "[Install]" >> $DEST_DIR/lib/systemd/system/${PACKAGE_NAME}d.service
 echo "WantedBy=multi-user.target" >> $DEST_DIR/lib/systemd/system/${PACKAGE_NAME}d.service
+
+sudo chown -R root:root $DEST_DIR
 
 # Build the package
 dpkg-deb --build $DEST_DIR
