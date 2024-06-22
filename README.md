@@ -60,3 +60,10 @@ To see the effect, in another terminal run this:
 watch -n0.1 nvidia-smi
 ```
 and run inference.
+
+
+## Demo
+
+Watch the demo video below:
+
+[gppm demo](screencast01.mkv)
