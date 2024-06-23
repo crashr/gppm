@@ -1,5 +1,21 @@
 #!/bin/bash
 
+# Ensure the script is run as root
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
+# Ensure necessary tools are installed
+for tool in python3 pip dpkg-deb
+do
+  if ! command -v $tool &> /dev/null
+  then
+    echo "$tool could not be found"
+    exit
+  fi
+done
+
 PACKAGE_NAME="gppmd" # TODO Get this as arg
 VERSION="0.0.0"
 MAINTAINER="Roni <noname@nowhere.com>"
@@ -7,6 +23,34 @@ DESCRIPTION="GPU Power and Performance Manager"
 ARCHITECTURE="amd64"
 
 DEST_DIR="debian/$PACKAGE_NAME"
+
+# Ensure the Python project file exists
+if [ ! -f "$PACKAGE_NAME.py" ]
+then
+  echo "$PACKAGE_NAME.py could not be found"
+  exit
+fi
+
+# Ensure the configuration file exists
+if [ ! -f "${PACKAGE_NAME}_config.yaml" ]
+then
+  echo "${PACKAGE_NAME}_config.yaml could not be found"
+  exit
+fi
+
+# Ensure the requirements.txt file exists
+if [ ! -f "requirements.txt" ]
+then
+  echo "requirements.txt could not be found"
+  exit
+fi
+
+# Ensure PyInstaller is installed
+if ! pip show PyInstaller &> /dev/null
+then
+  echo "PyInstaller is not installed"
+  exit
+fi
 
 # Create the directory structure
 mkdir -p $DEST_DIR/DEBIAN
@@ -76,5 +120,22 @@ SyslogIdentifier=$PACKAGE_NAME
 WantedBy=multi-user.target
 EOF
 
+# Ensure the systemd service file is created successfully
+if [ ! -f "$DEST_DIR/lib/systemd/system/$PACKAGE_NAME.service" ]
+then
+  echo "Failed to create $PACKAGE_NAME.service"
+  exit
+fi
+
 # Build the package
 dpkg-deb --build $DEST_DIR
+
+# Ensure the package is built successfully
+if [ ! -f "$DEST_DIR.deb" ]
+then
+  echo "Failed to build $PACKAGE_NAME.deb"
+  exit
+fi
+
+# Cleanup
+rm -rf $DEST_DIR
