@@ -9,7 +9,7 @@ from nvidia_pstate import set_pstate_low, set_pstate_high
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description='GPU Power and Performance Manager')
-parser.add_argument('--config', type=str, default='/etc/gppmd/config.yaml', help='Path to the configuration file')
+parser.add_argument('--config', type=str, default='/etc/gppmd/gppmd.yaml', help='Path to the configuration file')
 args = parser.parse_args()
 
 # Load configuration from YAML file
