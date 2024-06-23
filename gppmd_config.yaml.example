@@ -1,6 +1,6 @@
-log_file: '/var/log/gppm/gppmd.log'
+log_file: '/var/log/gppmd/gppmd.log'
 sleep_time: 0.1
 timeout_time: 0.0
 log_file_to_monitor: '/var/log/llama.cpp/llama-server.log'
-host: '0.0.0.0'
+host: '127.0.0.1'
 port: 5000
