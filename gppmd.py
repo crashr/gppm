@@ -35,7 +35,7 @@ def slot_released(line):
     set_pstate_low()
 
 def process_log(filename: str) -> None:
-    task_semaphore = threading.Semaphore(10) # TODO
+    task_semaphore = threading.Semaphore(config.get('max_llamacpp_instances', 10))
     try:
         with open(filename, 'r') as file:
             file.seek(0, 2)  # Go to the end of the file
@@ -52,7 +52,7 @@ def process_log(filename: str) -> None:
                     time.sleep(timeout_time)
                     logging.info(f"Timeout")
                     task_semaphore.release()
-                    if task_semaphore._value == 10: # TODO
+                    if task_semaphore._value == config.get('max_llamacpp_instances', 10):
                         slot_released(line)
     except FileNotFoundError:
         logging.error(f"File {filename} not found")
