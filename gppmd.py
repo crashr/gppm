@@ -3,6 +3,7 @@ import yaml
 import logging
 import time
 from threading import Thread
+import threading
 
 from flask import Flask, request, jsonify
 from nvidia_pstate import set_pstate_low, set_pstate_high
@@ -34,6 +35,7 @@ def slot_released(line):
     set_pstate_low()
 
 def process_log(filename: str) -> None:
+    task_semaphore = threading.Semaphore(10) # TODO
     try:
         with open(filename, 'r') as file:
             file.seek(0, 2)  # Go to the end of the file
@@ -43,12 +45,15 @@ def process_log(filename: str) -> None:
                     time.sleep(sleep_time)  # If no new line is available, wait
                     continue
                 if "slot is processing task" in line:
+                    task_semaphore.acquire()
                     slot_processing_task(line)
                 elif "slot released" in line: # or "all slots are idle": # FIXME
                     logging.info(f"timeout_time: {timeout_time}")
                     time.sleep(timeout_time)
                     logging.info(f"Timeout")
-                    slot_released(line)
+                    task_semaphore.release()
+                    if task_semaphore._value == 10: # TODO
+                        slot_released(line)
     except FileNotFoundError:
         logging.error(f"File {filename} not found")
     except Exception as e:
