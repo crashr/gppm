@@ -4,9 +4,12 @@ import logging
 import time
 from threading import Thread
 import threading
+import json
+import os
 
 from flask import Flask, request, jsonify
-from nvidia_pstate import set_pstate_low, set_pstate_high
+from nvidia_pstate import set_pstate_low, set_pstate_high, set_pstate
+
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description='GPU Power and Performance Manager')
@@ -24,36 +27,51 @@ app = Flask(__name__)
 sleep_time = config.get('sleep_time', 0.1)
 timeout_time = config.get('timeout_time', 0.0)
 
-def slot_processing_task(line):
-    logging.debug(f"Slot is processing task: {line}")
-    logging.info("Setting GPU to high performance")
-    set_pstate_high()
-
-def slot_released(line):
-    logging.debug(f"Slot released: {line}")
-    logging.info("Setting GPU to low performance")
-    set_pstate_low()
-
 def process_log(filename: str) -> None:
-    task_semaphore = threading.Semaphore(config.get('max_llamacpp_instances', 10))
+    # Dictionary to hold semaphores for each GPU index
+    gpu_semaphores = {}
     try:
         with open(filename, 'r') as file:
             file.seek(0, 2)  # Go to the end of the file
             while True:
                 line = file.readline()
-                if not line:
-                    time.sleep(sleep_time)  # If no new line is available, wait
+                #logging.info(line)
+                if not line or (not "slot is processing task" in line and not "slot released" in line):
+                    #time.sleep(sleep_time)  # If no new line is available, wait
                     continue
-                if "slot is processing task" in line:
-                    task_semaphore.acquire()
-                    slot_processing_task(line)
-                elif "slot released" in line: # or "all slots are idle": # FIXME
-                    logging.info(f"timeout_time: {timeout_time}")
-                    time.sleep(timeout_time)
-                    logging.info(f"Timeout")
-                    task_semaphore.release()
-                    if task_semaphore._value == config.get('max_llamacpp_instances', 10):
-                        slot_released(line)
+                #logging.info(line)
+                data = json.loads(line)  # Parse the JSON line
+                gpus = [int(x) for x in data["gppm"]["gppm_cvd"].split(',')]  # Get the GPU indices
+
+                logging.info(f"Prozess is using the following GPUs: {gpus}")
+
+                for gpu in gpus:
+
+                    logging.info(f"Processing GPU {gpu}")
+
+                    if "slot is processing task" in data["msg"]:
+
+                        logging.info(f"Found running task")
+
+                        if gpu not in gpu_semaphores: # FIXME is this correct?
+                            gpu_semaphores[gpu] = threading.Semaphore(config.get('max_llamacpp_instances', 10))
+                            logging.info(f"Created semaphore for GPU {gpu}")
+
+                        gpu_semaphores[gpu].acquire(blocking=False) # FIXME
+
+                        logging.info(f"Semaphore value for GPU {gpu}: {gpu_semaphores[gpu]._value}")
+                        logging.info(f"Setting GPU {gpu} into high performance mode")
+                        set_pstate([gpu], int(os.getenv("NVIDIA_PSTATE_HIGH", "16")), silent=True)
+                    elif "slot released" in data["msg"]:
+                        logging.info(f"Found terminated task")
+                        gpu_semaphores[gpu].release()
+                        logging.info(f"Semaphore value for GPU {gpu}: {gpu_semaphores[gpu]._value}")
+
+                        if gpu_semaphores[gpu]._value == config.get('max_llamacpp_instances', 10):
+                            logging.info(f"Setting GPU {gpu} into low performance mode") #in {timeout_time} seconds...")
+                            #time.sleep(timeout_time)
+                            set_pstate([gpu], int(os.getenv("NVIDIA_PSTATE_LOW", "8")), silent=True)
+
     except FileNotFoundError:
         logging.error(f"File {filename} not found")
     except Exception as e:
@@ -85,4 +103,6 @@ def set_timeout() -> tuple:
 if __name__ == '__main__':
     log_thread = Thread(target=process_log, args=(config.get('log_file_to_monitor', '/var/log/llama.cpp/llama-server.log'),))
     log_thread.start()
-    app.run(host=config.get('host', '0.0.0.0'), port=config.get('port', 5000))
+    #app.run(host=config.get('host', '0.0.0.0'), port=config.get('port', 5000))
+    
+    
