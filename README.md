@@ -36,7 +36,6 @@ To get started with gppm, follow these steps:
 1. **Copy configuration example**:
     ```sh
     cp gppmd_config.yaml.example gppmd_config.yaml
-    cd gppm
     ```
 2. **Change log_file_to_monitor**:
    
