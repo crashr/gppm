@@ -1,9 +1,8 @@
 # gppm
 GPU Power and Performance Manager
 
-gppm aims to be used with llama.cpp and older NVIDIA P40/P100 GPUs. Currently standalone llama.cpp doesn't provide functionality to reduce the power consumption of those GPUs in idle mode. This is where gppm jumps in.
-
-There is a patch available for llama.cpp but because it is based on switching the performance mode for all GPUs simultaneously it is very likely to break setups in which multiple llama.cpp instances share one or more GPUs. To fix this a complex mechanism would have to be implemented in llama.cpp, via which all llama.cpp instances can communicate with each other to synchronize a distributed structure in which the status of the tasks and their distribution to the GPUs is managed. This is much easier achieved from outside llama.cpp via gppm.
+gppm aims to be used with llama.cpp and older NVIDIA P40/P100 GPUs. Currently standalone llama.cpp doesn't provide functionality to reduce the power consumption of those GPUs in idle mode.
+There is a patch available for llama.cpp but because it is based on switching the performance mode for all GPUs simultaneously it is very likely to break setups in which multiple llama.cpp instances share one or more GPUs. To fix this a complex mechanism would have to be implemented in llama.cpp, via which all llama.cpp instances can communicate with each other to synchronize a distributed structure in which the status of the tasks and their distribution to the GPUs is managed. This is much easier achieved from outside llama.cpp via gppm. This is where gppm jumps in.
 
 See a demo of gppm forcing idle power consumption of a Testla P40 to 10 Watt instead of 50 Watt with only llama.cpp [gppm demo](screencast01.mkv)
   
