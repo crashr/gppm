@@ -1,0 +1,24 @@
+- command: "/usr/local/bin/llama-server"
+  cuda_visible_devices: "1,2"
+  options:
+  - --host 0.0.0.0
+  - -ngl 100
+  - -m /models/Replete-Coder-Llama3-8B-Q4_K_M.gguf
+  - --port 8082
+  - -fa
+  - -sm row
+  - -mg 0
+  - --no-mmap
+  - --log-format json
+- command: "/usr/local/bin/llama-server"
+  cuda_visible_devices: "2,3"
+  options:
+  - --host 0.0.0.0
+  - -ngl 100
+  - -m /models/Replete-Coder-Llama3-8B-Q4_K_M.gguf
+  - --port 8083
+  - -fa
+  - -sm row
+  - -mg 0
+  - --no-mmap
+  - --log-format json
