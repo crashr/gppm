@@ -1,15 +1,20 @@
-# gppm (alpha)
+# gppm
 GPU Power and Performance Manager
 
-gppm is aimed to be used with llama.cpp and NVIDIA P40 GPUs. Currently llama.cpp doesn't provide functionality to reduce the power consumption of P40s in idle mode. This is where gppm jumps in. gppm monitors llama.cpp's output and accordingly changes the performance modes of installed P40s. gppm is in its alpha phase, meaning it is in active development and not yet feature-complete. I welcome feedback and contributions.
+gppm aims to be used with llama.cpp and older NVIDIA P40/P100 GPUs. Currently standalone llama.cpp doesn't provide functionality to reduce the power consumption of P40s in idle mode. This is where gppm jumps in. 
 
 See a demo of gppm forcing idle power consumption of a Testla P40 to 10 Watt instead of 50 Watt with only llama.cpp [gppm demo](screencast01.mkv)
   
 ## Table of Contents
 
+- [How it works](#how-it-works)
 - [Installation](#installation)
 - [Basic configuration](#basic-configuration)
 - [Usage](#usage)
+
+## How it works
+
+gppm must be installed on the host where the GPUs are installed and llama.cpp is running. gppm monitors llama.cpp's output and accordingly changes the performance modes of installed P40/P100 GPUs. It can manage any number of GPUs. gppm switches each GPU to a low performance state as soon as none of the existing llama.cpp instances is running a task on that particular GPU and sets it into high performancemode as soon as the next task is going to be run. In doing so, gppm is able to control all GPUs independently of each other. gppm is designed as a wrapper and as such you have all llama.cpp instances configured at one place.
 
 ## Installation
 
