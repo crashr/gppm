@@ -20,43 +20,45 @@ gppm must be installed on the host where the GPUs are installed and llama.cpp is
 
 To get started with gppm, follow these steps:
 
-1. **Clone the repository**:
+1. Clone the repository:
     ```sh
     git clone https://github.com/crashr/gppm.git
     cd gppm
     ```
 
-2. **Set up a virtual environment**:
+2. Set up a virtual environment:
     ```sh
     python3 -m venv venv
     source venv/bin/activate
     ```
 
-3. **Install dependencies**:
+3. Install dependencies:
     ```sh
     pip install -r requirements.txt
     ```
     
 ## Quickstart
 
-1. **Stop any running llama.cpp instances, you will launch them now with gppm**
+1. Stop any running llama.cpp instances, you will launch them now with gppm
 
-2. **Rename one or both llama.cpp example configuration files to .yaml and edit to your needs**
+2. Rename one or both llama.cpp example configuration files to .yaml and edit to your needs
     ```
     cp llamacpp_configs/codestral.yaml.example llamacpp_configs/codestral.yaml
     cp llamacpp_configs/2x_replete-coder.yaml.example llamacpp_configs/2x_replete-coder.yaml
     
-4. **Launch all configured llama.cpp instances by running gppmd**
+4. Launch all configured llama.cpp instances by running gppmd
     ```sh
     python3 gppmd.py --llamacpp_configs_dir ./llamacpp_configs
     ```
 
-5. **Observe GPU utilization in another terminal**
+5. Observe GPU utilization in another terminal
     ```sh
     watch -n0.1 nvidia-smi
     ```
 
-6. **Wait for the API or web interface to be up and running and run inference.**
+6. Wait for the API or web interface to be up and running and run inference.
 
 
 ## Configuration
+
+*Coming soon*
