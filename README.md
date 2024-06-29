@@ -1,7 +1,7 @@
 # gppm
 GPU Power and Performance Manager
 
-gppm aims to be used with llama.cpp and older NVIDIA P40/P100 GPUs. Currently standalone llama.cpp doesn't provide functionality to reduce the power consumption of P40s in idle mode. This is where gppm jumps in. 
+gppm aims to be used with llama.cpp and older NVIDIA P40/P100 GPUs. Currently standalone llama.cpp doesn't provide functionality to reduce the power consumption of those GPUs in idle mode. This is where gppm jumps in. 
 
 See a demo of gppm forcing idle power consumption of a Testla P40 to 10 Watt instead of 50 Watt with only llama.cpp [gppm demo](screencast01.mkv)
   
