@@ -36,31 +36,21 @@ To get started with gppm, follow these steps:
     ```sh
     pip install -r requirements.txt
     ```
+    
+## Quickstart
 
-## Basic configuration
-1. **Copy configuration example**:
-    ```sh
-    cp gppmd_config.yaml.example gppmd_config.yaml
+1. **Stop any running llama.cpp instances, you will launch them now with gppm**
+2. **Rename one or both llama.cpp configuration files to .yaml and edit to your needs**
     ```
-2. **Change log_file_to_monitor**:
-   
-    Set log_file_to_monitor to a path that gppm can read from and llama.cpp can write to.
-
-
-## Usage
-
-Run llama.cpp like this:
-```sh
-llama-server <OTHER OPTIONS> --log-format text >> /path/to/llama-server.log
-```
-
-When llama.cpp is up and running, use the following command to run gppm:
-
-```sh
-python3 gppmd.py --config gppmd_config.yaml
-```
-To see the effect, in another terminal run this:
-```sh
-watch -n0.1 nvidia-smi
-```
-and run inference.
+    cp llamacpp_configs/codestral.yaml.example llamacpp_configs/codestral.yaml
+    cp llamacpp_configs/2x_replete-coder.yaml.example llamacpp_configs/2x_replete-coder.yaml
+    
+4. **Launch all configured llama.cpp instances by running gppmd**
+    ```sh
+    python3 gppmd.py --llamacpp_configs_dir ./llamacpp_configs
+    ```
+5. **Observe GPU utilization in another terminal**
+    ```sh
+    watch -n0.1 nvidia-smi
+    ```
+6. **Wait for the API or web interface to be up and running and run inference.**
