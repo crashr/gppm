@@ -1,4 +1,5 @@
-- command: "/usr/local/bin/llama-server"
+- name: "replete-coder-01"
+  command: "/usr/local/bin/llama-server"
   cuda_visible_devices: "1,2"
   options:
   - --host 0.0.0.0
@@ -10,7 +11,8 @@
   - -mg 0
   - --no-mmap
   - --log-format json
-- command: "/usr/local/bin/llama-server"
+- name: "replete-coder-02"
+  command: "/usr/local/bin/llama-server"
   cuda_visible_devices: "2,3"
   options:
   - --host 0.0.0.0
