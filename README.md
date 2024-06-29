@@ -40,7 +40,7 @@ To get started with gppm, follow these steps:
 
 1. **Stop any running llama.cpp instances, you will launch them now with gppm**
 
-2. **Rename one or both llama.cpp configuration files to .yaml and edit to your needs**
+2. **Rename one or both llama.cpp example configuration files to .yaml and edit to your needs**
     ```
     cp llamacpp_configs/codestral.yaml.example llamacpp_configs/codestral.yaml
     cp llamacpp_configs/2x_replete-coder.yaml.example llamacpp_configs/2x_replete-coder.yaml
