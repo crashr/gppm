@@ -13,7 +13,7 @@ See a demo of gppm forcing idle power consumption of a Testla P40 to 10 Watt ins
 
 ## How it works
 
-gppm must be installed on the host where the GPUs are installed and llama.cpp is running. gppm monitors llama.cpp's output and accordingly changes the performance modes of installed P40/P100 GPUs. It can manage any number of GPUs. gppm switches each GPU to a low performance state as soon as none of the existing llama.cpp instances is running a task on that particular GPU and sets it into high performancemode as soon as the next task is going to be run. In doing so, gppm is able to control all GPUs independently of each other. gppm is designed as a wrapper and as such you have all llama.cpp instances configured at one place.
+gppm must be installed on the host where the GPUs are installed and llama.cpp is running. gppm monitors llama.cpp's output and accordingly changes the performance modes of installed P40/P100 GPUs. It can manage any number of GPUs and llama.cpp instances. gppm switches each GPU to a low performance state as soon as none of the existing llama.cpp instances is running a task on that particular GPU and sets it into high performancemode as soon as the next task is going to be run. In doing so, gppm is able to control all GPUs independently of each other. gppm is designed as a wrapper and as such you have all llama.cpp instances configured at one place.
 
 ## Installation
 
