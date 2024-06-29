@@ -24,7 +24,7 @@ trap stop_command EXIT
 
 start_command
 
-inotifywait -m -r -e modify,create,delete,move "$SRC_DIR" |
+inotifywait --exclude ".*\.log|\..*" -m -r -e modify,create,delete,move "$SRC_DIR" |
 while read -r directory events filename; do
     echo "Change detected in $directory$filename: $events"
     stop_command
