@@ -40,6 +40,7 @@ To get started with gppm, follow these steps:
 ## Quickstart
 
 1. **Stop any running llama.cpp instances, you will launch them now with gppm**
+
 2. **Rename one or both llama.cpp configuration files to .yaml and edit to your needs**
     ```
     cp llamacpp_configs/codestral.yaml.example llamacpp_configs/codestral.yaml
@@ -49,8 +50,10 @@ To get started with gppm, follow these steps:
     ```sh
     python3 gppmd.py --llamacpp_configs_dir ./llamacpp_configs
     ```
+
 5. **Observe GPU utilization in another terminal**
     ```sh
     watch -n0.1 nvidia-smi
     ```
+
 6. **Wait for the API or web interface to be up and running and run inference.**
