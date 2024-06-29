@@ -7,7 +7,7 @@ import threading
 import json
 import os
 from nvidia_pstate import set_pstate_low, set_pstate_high, set_pstate
-#import fileinput
+from flask import Flask
 import subprocess
 import tempfile
 import re
@@ -141,6 +141,12 @@ def reload_configs(llamacpp_configs_dir):
 
     threads = new_threads
 
+app = Flask(__name__)
+
+@app.route('/test', methods=['GET'])
+def test_endpoint():
+    logging.info("API test endpoint hit")
+    return "Test endpoint hit"
 
 if __name__ == '__main__':
 
@@ -166,6 +172,9 @@ if __name__ == '__main__':
     
 
     logging.info(f"All llama.cpp instances launched")
+
+    # TODO if activated in config
+    app.run(host='0.0.0.0', port=5000)
 
     for thread in threads:
         thread.join()
