@@ -11,6 +11,7 @@ See a demo of gppm forcing idle power consumption of a Testla P40 to 10 Watt ins
 - [How it works](#how-it-works)
 - [Installation](#installation)
 - [Quickstart](#quickstart)
+- [Command line interface](#command-line-interface)
 
 ## How it works
 
