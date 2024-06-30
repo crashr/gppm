@@ -4,54 +4,32 @@ import yaml
 import argparse
 import os
 
-def load_config(path: str) -> dict:
-    try:
-        with open(path, 'r') as file:
-            config = yaml.safe_load(file)
-        return config
-    except FileNotFoundError:
-        print(f"Configuration file not found at {path}. Using default settings.")
-        return {}
+import requests
+import json
+import click
 
-def set_sleep_time(sleep_time: float, url: str) -> None:
-    headers = {'Content-Type': 'application/json'}
-    data = json.dumps({'sleep_time': sleep_time})
+BASE_URL = "http://localhost:5001"  # TODO Put in config
 
-    response = requests.post(url, headers=headers, data=data)
+@click.group()
+def cli():
+    pass
 
-    if response.status_code == 200:
-        print(f"Successfully set sleep time to {sleep_time}")
-    else:
-        print(f"Failed to set sleep time. Server responded with: {response.json()}")
+@cli.command()
+def reload_llamacpp_configs():
+    response = requests.get(f"{BASE_URL}/reload_llamacpp_configs")
+    print(response.json())
 
-def set_timeout_time(timeout_time: float, url: str) -> None:
-   headers = {'Content-Type': 'application/json'}
-   data = json.dumps({'timeout_time': timeout_time})
+@cli.command()
+def get_llamacpp_instances():
+    response = requests.get(f"{BASE_URL}/get_llamacpp_instances")
+    #print(response.text)
+    print(response.json())
 
-   response = requests.post(url, headers=headers, data=data)
+@cli.command()
+def get_llamacpp_configs():
+    response = requests.get(f"{BASE_URL}/get_llamacpp_configs")
+    #print(response.text)
+    print(response.json())
 
-   if response.status_code == 200:
-       print(f"Successfully set timeout time to {timeout_time}")
-   else:
-       print(f"Failed to set timeout time. Server responded with: {response.json()}")
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='GPU Performance Manager Client')
-    parser.add_argument('--sleep', type=float, help='The sleep time to set')
-    parser.add_argument('--timeout', type=float, help='The timeout time to set')
-    parser.add_argument('--config', type=str, default=os.path.expanduser("~/.gppm/config.yaml"), help='Path to the configuration file')
-    args = parser.parse_args()
-
-    config = load_config(args.config)
-    url = config.get('server_url', "http://localhost:5000")
-
-    if args.sleep is not None:
-        url_ep = url + "/set_sleep_time"
-        print(url_ep)
-        set_sleep_time(args.sleep, url_ep)
-
-    if args.timeout is not None:
-        url_ep = url + "/set_timeout_time"
-
-        set_timeout_time(args.timeout, url + "/set_timeout_time")
+if __name__ == "__main__":
+    cli()

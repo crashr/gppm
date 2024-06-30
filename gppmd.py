@@ -7,6 +7,7 @@ import json
 import os
 from nvidia_pstate import set_pstate_low, set_pstate_high, set_pstate
 from flask import Flask
+from flask import jsonify
 import subprocess
 import tempfile
 import re
@@ -212,28 +213,23 @@ def reload_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir):
 
 @app.route('/reload_llamacpp_configs', methods=['GET'])
 def api_reload_llamacpp_configs():
-    global configs
-    global threads
-    configs, threads = reload_llamacpp_configs(llamacpp_configs_dir)
-    thread_names = list_thread_names()
-    return thread_names
+    #global configs
+    #global threads
+    #configs, threads = reload_llamacpp_configs(llamacpp_configs_dir)
+    reload_llamacpp_configs(llamacpp_configs_dir)
+    return {"status":"OK"}
 
-@app.route('/list_llamacpp_instances', methods=['GET'])
-def api_list_llamacpp_instances():
-    for thread in threads: # TODO
-        print(thread._args[0]['name'])
-    return "Done"
+@app.route('/get_llamacpp_instances', methods=['GET'])
+def api_get_llamacpp_instances():
+    instances = {"llamacpp_instances": []}
+    for thread in threads:
+        thread_name = thread._args[0]['name']
+        instances["llamacpp_instances"].append(thread_name)
+    return jsonify(instances)
 
 @app.route('/get_llamacpp_configs', methods=['GET'])
 def api_get_llamacpp_configs():
-    for config in configs:
-        print(config)
-    return "Done"
-
-@app.route('/get_thread_names', methods=['GET'])
-def api_get_thread_names():
-    thread_names = list_thread_names()
-    return thread_names
+    return jsonify(configs)
 
 server = make_server('0.0.0.0', 5001, app)
 server_thread = threading.Thread(target=server.serve_forever)
