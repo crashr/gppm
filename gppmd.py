@@ -107,18 +107,18 @@ def launch_llamacpp(llamacpp_config, stop_event):
 
     while not stop_event.is_set():
         # Wait for data to be available for reading
-        if llamacpp_process.stdout.readable():
+        ready_to_read, _, _ = select.select([llamacpp_process.stdout], [], [], 0.1)
+        if ready_to_read:
             # New data available, read it
             line = llamacpp_process.stdout.readline()
             if pattern.search(line):
                 data = json.loads(line)
-                data['gppm'] = {'llamacpp_pid': llamacpp_process.pid, 'gppm_cvd': env["CUDA_VISIBLE_DEVICES"]} # TODO
+                data['gppm'] = {'llamacpp_pid': llamacpp_process.pid, 'gppm_cvd': env["CUDA_VISIBLE_DEVICES"]}
                 process_line(data)
         else:
             # No new data available, check if the subprocess has terminated
             if llamacpp_process.poll() is not None:
                 break
-
 
     llamacpp_process.terminate()
     llamacpp_process.wait()
