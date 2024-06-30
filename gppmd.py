@@ -8,6 +8,7 @@ import os
 from nvidia_pstate import set_pstate_low, set_pstate_high, set_pstate
 from flask import Flask
 from flask import jsonify
+from flask import render_template
 import subprocess
 import tempfile
 import re
@@ -230,6 +231,10 @@ def api_get_llamacpp_instances():
 @app.route('/get_llamacpp_configs', methods=['GET'])
 def api_get_llamacpp_configs():
     return jsonify(configs)
+
+@app.route('/gui', methods=['GET'])
+def gui():
+    return render_template('home.html')
 
 server = make_server('0.0.0.0', 5001, app)
 server_thread = threading.Thread(target=server.serve_forever)
