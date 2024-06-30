@@ -1,4 +1,5 @@
-- command: "/usr/local/bin/llama-server"
+- name: "codestral"
+  command: "/usr/local/bin/llama-server"
   cuda_visible_devices: "0,1"
   options:
   - --host 0.0.0.0
