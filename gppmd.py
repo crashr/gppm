@@ -45,7 +45,7 @@ for gpu in range(num_gpus):
     gpu_semaphores[gpu] = threading.Semaphore(config.get('max_llamacpp_instances', 10))
 
 def process_line(data):
-    print(data)
+    #print(data)
     logging.info(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     gpus = [int(x) for x in data["gppm"]["gppm_cvd"].split(',')]
     pid = data["gppm"]["llamacpp_pid"]
@@ -148,41 +148,41 @@ def purge_thread(thread):
 def reload_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir):
     global threads
 
-    print(f"Current threads:")
-    for thread in threads:
-        print(f" {thread._args[0]['name']} {thread}")
+    #print(f"Current threads:")
+    #for thread in threads:
+    #    print(f" {thread._args[0]['name']} {thread}")
 
     new_threads = []
     new_configs = load_llamacpp_configs(llamacpp_configs_dir)
     
     for config in new_configs:
-        print(f"Found config {config['name']}")
+        #print(f"Found config {config['name']}")
 
         no_match_found=True
         create_new_thread=True
 
         for thread in threads:
 
-            print(f" Comparing existing thread {thread._args[0]['name']} with {config['name']}")
+            #print(f" Comparing existing thread {thread._args[0]['name']} with {config['name']}")
 
             if thread._args[0]['name'] == config['name']:
-                print("  Names match. Does config differ? ", end='')
+                #print("  Names match. Does config differ? ", end='')
                 if thread._args[0] != config:
-                    print("   Yes.")
+                    #print("   Yes.")
                     purge_thread(thread)
-                    print("   Thread removed. Creating new one.")                    
+                    #print("   Thread removed. Creating new one.")                    
                     stop_event = threading.Event()
                     thread = threading.Thread(target=launch_llamacpp, args=(config, stop_event))
                     thread.start()
                     new_threads.append(thread)                    
-                    print("   New thread up and running")
-                else:
-                    print("   No.")
-                    #break
+                    #print("   New thread up and running")
+                #else:
+                #    print("   No.")
+                #    #break
                 create_new_thread=False
 
-            else:
-                print(" Thread with that name not found yet.")
+            #else:
+            #    print(" Thread with that name not found yet.")
 
         if create_new_thread==True:
             # Thread doesn't exist, create a new one
@@ -190,9 +190,9 @@ def reload_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir):
             thread = threading.Thread(target=launch_llamacpp, args=(config, stop_event))
             thread.start()
             new_threads.append(thread)
-            print(" Created and appended new thread")
+            #print(" Created and appended new thread")
 
-        print(f"Config {config['name']} processed")
+        #print(f"Config {config['name']} processed")
 
     for thread in new_threads:
         threads.append(thread)
@@ -200,13 +200,13 @@ def reload_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir):
     # Search threads left that are not in new config and remove them
     for thread in threads:
         if thread._args[0]['name'] not in [config['name'] for config in new_configs]:
-            print(f"{thread._args[0]['name']} is going to be removed")
+            #print(f"{thread._args[0]['name']} is going to be removed")
             purge_thread(thread)
 
     configs = new_configs
 
-    for thread in threads:
-        print(f"{thread._args[0]['name']} {thread}")
+    #for thread in threads:
+    #    print(f"{thread._args[0]['name']} {thread}")
 
     return new_configs, threads
 
@@ -240,7 +240,7 @@ if __name__ == '__main__':
 
     logging.info(f"Reading llama.cpp configs")
     configs = load_llamacpp_configs()
-    print(configs)
+    #print(configs)
 
     for config in configs:
         stop_event = threading.Event()
