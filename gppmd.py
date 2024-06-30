@@ -2,7 +2,6 @@ import argparse
 import yaml
 import logging
 import time
-#from threading import Thread
 import threading
 import json
 import os
@@ -13,9 +12,11 @@ import tempfile
 import re
 import shlex
 from werkzeug.serving import make_server
+import select
+
 
 app = Flask(__name__)
-app.config['DEBUG'] = True
+#app.config['DEBUG'] = True
 
 parser = argparse.ArgumentParser(description='GPU Power and Performance Manager')
 parser.add_argument('--config', type=str, default='/etc/gppmd/config.yaml', help='Path to the configuration file')
@@ -43,6 +44,7 @@ for gpu in range(num_gpus):
     gpu_semaphores[gpu] = threading.Semaphore(config.get('max_llamacpp_instances', 10))
 
 def process_line(data):
+    print(data)
     logging.info(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     gpus = [int(x) for x in data["gppm"]["gppm_cvd"].split(',')]
     pid = data["gppm"]["llamacpp_pid"]
@@ -107,16 +109,25 @@ def launch_llamacpp(llamacpp_config, stop_event):
     pattern = re.compile(r'slot is processing task|slot released')
 
     while not stop_event.is_set():
-        if llamacpp_process.poll() is None:
-            # No new data available, check stop event
-            time.sleep(0.1)
-        else:
+        print("DEBUG_00")
+        # Wait for data to be available for reading
+        if llamacpp_process.stdout.readable():
+            print("DEBUG_01")
             # New data available, read it
             line = llamacpp_process.stdout.readline()
+            print(f"DEBUG_02 {line}")
             if pattern.search(line):
+                print("DEBUG_03")
                 data = json.loads(line)
                 data['gppm'] = {'llamacpp_pid': llamacpp_process.pid, 'gppm_cvd': env["CUDA_VISIBLE_DEVICES"]} # TODO
                 process_line(data)
+        else:
+            print("DEBUG_04")
+            # No new data available, check if the subprocess has terminated
+            if llamacpp_process.poll() is not None:
+                print("DEBUG_05")
+                break
+
 
     llamacpp_process.terminate()
     llamacpp_process.wait()
@@ -145,7 +156,7 @@ def purge_thread(thread):
 def reload_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir):
     global threads
 
-    print(f"current threads:")
+    print(f"Current threads:")
     for thread in threads:
         print(f" {thread._args[0]['name']} {thread}")
 
@@ -163,29 +174,23 @@ def reload_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir):
             print(f" Comparing existing thread {thread._args[0]['name']} with {config['name']}")
 
             if thread._args[0]['name'] == config['name']:
-                print("  Names match. Does config differ?")
-
+                print("  Names match. Does config differ? ", end='')
                 if thread._args[0] != config:
                     print("   Yes.")
-                    
                     purge_thread(thread)
-                    
-                    print("   Old one gone, new one to come...")
-                    
+                    print("   Thread removed. Creating new one.")                    
                     stop_event = threading.Event()
                     thread = threading.Thread(target=launch_llamacpp, args=(config, stop_event))
                     thread.start()
-                    new_threads.append(thread)
-                    
-                    print("   New one up and running")
+                    new_threads.append(thread)                    
+                    print("   New thread up and running")
                 else:
                     print("   No.")
                     #break
-
                 create_new_thread=False
 
             else:
-                print(" Thread with that name not found yet")
+                print(" Thread with that name not found yet.")
 
         if create_new_thread==True:
             # Thread doesn't exist, create a new one
@@ -200,7 +205,7 @@ def reload_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir):
     for thread in new_threads:
         threads.append(thread)
 
-    # Search threads that are not in new config and remove them
+    # Search threads left that are not in new config and remove them
     for thread in threads:
         if thread._args[0]['name'] not in [config['name'] for config in new_configs]:
             print(f"{thread._args[0]['name']} is going to be removed")
@@ -224,8 +229,7 @@ def api_reload_llamacpp_configs():
 
 @app.route('/list_llamacpp_instances', methods=['GET'])
 def api_list_llamacpp_instances():
-    print("list_llamacpp_instances:")
-    for thread in threads:
+    for thread in threads: # TODO
         print(thread._args[0]['name'])
     return "Done"
 
@@ -235,18 +239,14 @@ def api_get_llamacpp_configs():
         print(config)
     return "Done"
 
-@app.route('/get_threads', methods=['GET'])
-def api_get_threads():
+@app.route('/get_thread_names', methods=['GET'])
+def api_get_thread_names():
     thread_names = list_thread_names()
     return thread_names
 
-server = make_server('0.0.0.0', 5000, app)
+server = make_server('0.0.0.0', 5001, app)
 server_thread = threading.Thread(target=server.serve_forever)
 server_thread.start()
-
-#app.run(host='0.0.0.0', port=5000)
-#flask_thread = threading.Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': 5000})
-#flask_thread.start()
 
 
 if __name__ == '__main__':
