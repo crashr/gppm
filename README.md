@@ -11,6 +11,7 @@ See a demo of gppm forcing idle power consumption of a Testla P40 to 10 Watt ins
 - [How it works](#how-it-works)
 - [Installation](#installation)
 - [Quickstart](#quickstart)
+- [Command line interface](#command-line-interface)
 
 ## How it works
 
@@ -53,11 +54,27 @@ To get started with gppm, follow these steps:
 
 5. Observe GPU utilization in another terminal
     ```sh
-    watch -n0.1 nvidia-smi
+    watch -n 0.1 nvidia-smi
     ```
 
 6. Wait for the API or web interface to be up and running and run inference.
 
+
+## Command line interface
+
+gppm comes with a cli client.
+```bash
+python3 gppm.py 
+Usage: gppm.py [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  get-llamacpp-configs
+  get-llamacpp-instances
+  reload-llamacpp-configs
+```
 
 ## Configuration
 
