@@ -76,17 +76,14 @@ def list_thread_names():
     return thread_names
 
 def launch_llamacpp(llamacpp_config, stop_event):
-    logging.info("LAUNCH")
     tmp_dir = tempfile.TemporaryDirectory(dir='/tmp')
     os.makedirs(tmp_dir.name, exist_ok=True)
     pipe = os.path.join(tmp_dir.name, "pipe")
     os.mkfifo(pipe)
-    logging.info(f"Created {pipe}")
 
     llamacpp_options = []
     for option in llamacpp_config["options"]:
         if isinstance(option, dict):
-            logging.info("DEBUG: {option}")
             pass
         else:
             llamacpp_options.append(str(option))
@@ -109,23 +106,17 @@ def launch_llamacpp(llamacpp_config, stop_event):
     pattern = re.compile(r'slot is processing task|slot released')
 
     while not stop_event.is_set():
-        print("DEBUG_00")
         # Wait for data to be available for reading
         if llamacpp_process.stdout.readable():
-            print("DEBUG_01")
             # New data available, read it
             line = llamacpp_process.stdout.readline()
-            print(f"DEBUG_02 {line}")
             if pattern.search(line):
-                print("DEBUG_03")
                 data = json.loads(line)
                 data['gppm'] = {'llamacpp_pid': llamacpp_process.pid, 'gppm_cvd': env["CUDA_VISIBLE_DEVICES"]} # TODO
                 process_line(data)
         else:
-            print("DEBUG_04")
             # No new data available, check if the subprocess has terminated
             if llamacpp_process.poll() is not None:
-                print("DEBUG_05")
                 break
 
 
@@ -136,7 +127,7 @@ global llamacpp_configs_dir
 llamacpp_configs_dir = config.get('llamacpp_configs_dir', '/etc/gppmd/llamacpp_configs')
 
 #global configs
-configs = [] #{}
+configs = {}
 threads = []
 
 def load_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir,configs=configs):
@@ -149,8 +140,8 @@ def load_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir,configs=conf
 configs = load_llamacpp_configs()
 
 def purge_thread(thread):
-    thread._args[1].set()  # Signal to stop
-    thread.join()  # Wait for the thread to finish
+    thread._args[1].set()   # Signal to stop
+    thread.join()           # Wait for the thread to finish
     threads.remove(thread)  # Remove the thread from the list
 
 def reload_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir):
