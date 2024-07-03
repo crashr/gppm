@@ -148,6 +148,7 @@ def purge_thread(thread):
 
 def reload_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir):
     global threads
+    global configs
 
     #print(f"Current threads:")
     #for thread in threads:
