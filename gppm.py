@@ -1,11 +1,5 @@
 import requests
 import json
-import yaml
-import argparse
-import os
-
-import requests
-import json
 import click
 
 BASE_URL = "http://localhost:5001"  # TODO Put in config
