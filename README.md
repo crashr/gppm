@@ -1,12 +1,11 @@
 # gppm
 GPU Power and Performance Manager
 
-gppm aims to be used with llama.cpp and NVIDIA Tesla P40 GPUs. Currently standalone llama.cpp doesn't provide functionality to reduce the power consumption of those GPUs in idle mode.
-There is a patch available for llama.cpp but because it is based on switching the performance mode for all GPUs simultaneously it is very likely to break setups in which multiple llama.cpp instances share one or more GPUs. To fix this a complex mechanism would have to be implemented in llama.cpp, via which all llama.cpp instances can communicate with each other to synchronize a distributed structure in which the status of the tasks and their distribution to the GPUs is managed. This is much easier achieved from outside of llama.cpp. This is where gppm jumps in.
+gppm is designed for use with llama.cpp and NVIDIA Tesla P40 GPUs. The standalone llama.cpp currently lacks functionality to reduce the power consumption of these GPUs in idle mode. Although there is a patch for llama.cpp, it switches the performance mode for all GPUs simultaneously, which can disrupt setups where multiple llama.cpp instances share one or more GPUs. Implementing a communication mechanism within llama.cpp to manage task distribution and GPU status is complex. gppm addresses this challenge externally, providing a more efficient solution.
 
-See a demo of gppm forcing idle power consumption of a Testla P40 to 10 Watt instead of 50 Watt with only llama.cpp [demo](screencast01.mkv)
+Check out a demo of gppm reducing the idle power consumption of a Tesla P40 from 50 Watts to 10 Watts with llama.cpp [here](screencast01.mkv).
 
-Beside that gppm provides a way to define llama.cpp instances as code and let them spawn/terminate/respawn automatically. See a demo of how to use this feature here [demo](screencast02.mkv)
+Additionally, gppm allows you to define llama.cpp instances as code, enabling automatic spawning, termination, and respawning. Watch a demo of this feature [here](screencast02.mkv).
 
   
 ## Table of Contents
