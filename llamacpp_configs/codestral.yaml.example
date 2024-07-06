@@ -1,4 +1,5 @@
 - name: "codestral"
+  enabled: False
   command: "/usr/local/bin/llama-server"
   cuda_visible_devices: "0,1"
   options:

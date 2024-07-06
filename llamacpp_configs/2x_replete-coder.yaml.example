@@ -1,6 +1,7 @@
 - name: "replete-coder-01"
+  enabled: True
   command: "/usr/local/bin/llama-server"
-  cuda_visible_devices: "1,2"
+  cuda_visible_devices: "0"
   options:
   - --host 0.0.0.0
   - -ngl 100
@@ -11,9 +12,11 @@
   - -mg 0
   - --no-mmap
   - --log-format json
+
 - name: "replete-coder-02"
+  enabled: False
   command: "/usr/local/bin/llama-server"
-  cuda_visible_devices: "2,3"
+  cuda_visible_devices: "0,1"
   options:
   - --host 0.0.0.0
   - -ngl 100
