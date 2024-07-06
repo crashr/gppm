@@ -17,8 +17,14 @@ from werkzeug.serving import make_server
 import select
 
 
+global llamacpp_configs_dir
+global configs
+global threads
+configs = []
+threads = []
+
 app = Flask(__name__)
-#app.config['DEBUG'] = True
+app.config['DEBUG'] = True
 
 parser = argparse.ArgumentParser(description='GPU Power and Performance Manager')
 parser.add_argument('--config', type=str, default='/etc/gppmd/config.yaml', help='Path to the configuration file')
@@ -46,7 +52,6 @@ for gpu in range(num_gpus):
     gpu_semaphores[gpu] = threading.Semaphore(config.get('max_llamacpp_instances', 10))
 
 def process_line(data):
-    #print(data)
     logging.info(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     gpus = [int(x) for x in data["gppm"]["gppm_cvd"].split(',')]
     pid = data["gppm"]["llamacpp_pid"]
@@ -84,6 +89,7 @@ def launch_llamacpp(llamacpp_config, stop_event):
     os.mkfifo(pipe)
 
     llamacpp_options = []
+
     for option in llamacpp_config["options"]:
         if isinstance(option, dict):
             pass
@@ -125,100 +131,70 @@ def launch_llamacpp(llamacpp_config, stop_event):
     llamacpp_process.terminate()
     llamacpp_process.wait()
 
-global llamacpp_configs_dir
 llamacpp_configs_dir = config.get('llamacpp_configs_dir', '/etc/gppmd/llamacpp_configs')
 
-#global configs
-configs = {}
-threads = []
-
-def load_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir,configs=configs):
+def load_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir):
+    new_configs = []
     for filename in os.listdir(llamacpp_configs_dir):
         if filename.endswith('.yaml'):
             with open(os.path.join(llamacpp_configs_dir, filename), 'r') as f:
                 configs = yaml.safe_load(f)
-                return configs
+                for config in configs:
+                    new_configs.append(config)
+    return new_configs
 
-configs = load_llamacpp_configs()
+#configs = load_llamacpp_configs()
 
 def purge_thread(thread):
     thread._args[1].set()   # Signal to stop
     thread.join()           # Wait for the thread to finish
     threads.remove(thread)  # Remove the thread from the list
 
-def reload_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir):
-    global threads
-    global configs
+def sync_threads_with_configs(threads, configs, launch_llamacpp):
 
-    #print(f"Current threads:")
-    #for thread in threads:
-    #    print(f" {thread._args[0]['name']} {thread}")
+    existing_config_names = [thread._args[0]['name'] for thread in threads]
 
-    new_threads = []
-    new_configs = load_llamacpp_configs(llamacpp_configs_dir)
-    
-    for config in new_configs:
-        #print(f"Found config {config['name']}")
+    #new_config_names = [config['name'] for config in configs]
+    new_config_names = []
+    for config in configs:
+        new_config_names.append(config['name'])
 
-        no_match_found=True
-        create_new_thread=True
-
-        for thread in threads:
-
-            #print(f" Comparing existing thread {thread._args[0]['name']} with {config['name']}")
-
-            if thread._args[0]['name'] == config['name']:
-                #print("  Names match. Does config differ? ", end='')
-                if thread._args[0] != config:
-                    #print("   Yes.")
-                    purge_thread(thread)
-                    #print("   Thread removed. Creating new one.")                    
-                    stop_event = threading.Event()
-                    thread = threading.Thread(target=launch_llamacpp, args=(config, stop_event))
-                    thread.start()
-                    new_threads.append(thread)                    
-                    #print("   New thread up and running")
-                #else:
-                #    print("   No.")
-                #    #break
-                create_new_thread=False
-
-            #else:
-            #    print(" Thread with that name not found yet.")
-
-        if create_new_thread==True:
-            # Thread doesn't exist, create a new one
-            stop_event = threading.Event()
-            thread = threading.Thread(target=launch_llamacpp, args=(config, stop_event))
-            thread.start()
-            new_threads.append(thread)
-            #print(" Created and appended new thread")
-
-        #print(f"Config {config['name']} processed")
-
-    for thread in new_threads:
-        threads.append(thread)
-
-    # Search threads left that are not in new config and remove them
-    for thread in threads:
-        if thread._args[0]['name'] not in [config['name'] for config in new_configs]:
-            #print(f"{thread._args[0]['name']} is going to be removed")
+    # Remove threads that are not in the configs
+    for thread in threads[:]:
+        if thread._args[0]['name'] not in new_config_names:
             purge_thread(thread)
+            #threads.remove(thread)
 
-    configs = new_configs
-
-    #for thread in threads:
-    #    print(f"{thread._args[0]['name']} {thread}")
-
-    return new_configs, threads
+    # Add or update threads based on the configs
+    for config in configs:
+        if config['name'] in existing_config_names:                                 # FIXME is that needed?
+            # Update existing thread
+            for thread in threads:
+                if thread._args[0]['name'] == config['name']:
+                    if thread._args[0] != config or config["enabled"]==False:                                   # FIXME does order of options in config file matter?
+                        print("Thread config has changed. Purging thread.")
+                        purge_thread(thread)
+                        if config["enabled"]==True:
+                            stop_event = threading.Event()
+                            new_thread = threading.Thread(target=launch_llamacpp, args=(config, stop_event))
+                            new_thread.start()
+                            threads.append(new_thread)
+        else:
+            if config["enabled"]==True:
+                # Add new thread
+                stop_event = threading.Event()
+                new_thread = threading.Thread(target=launch_llamacpp, args=(config, stop_event))
+                new_thread.start()
+                threads.append(new_thread)
+    return threads
 
 
 @app.route('/reload_llamacpp_configs', methods=['GET'])
 def api_reload_llamacpp_configs():
-    #global configs
-    #global threads
-    #configs, threads = reload_llamacpp_configs(llamacpp_configs_dir)
-    reload_llamacpp_configs(llamacpp_configs_dir)
+    global configs
+    global threads
+    configs = load_llamacpp_configs()
+    threads = sync_threads_with_configs(threads, configs, launch_llamacpp)
     return {"status":"OK"}
 
 @app.route('/get_llamacpp_instances', methods=['GET'])
@@ -245,14 +221,9 @@ server_thread.start()
 if __name__ == '__main__':
 
     logging.info(f"Reading llama.cpp configs")
-    configs = load_llamacpp_configs()
-    #print(configs)
 
-    for config in configs:
-        stop_event = threading.Event()
-        thread = threading.Thread(target=launch_llamacpp, args=(config, stop_event))
-        thread.start()
-        threads.append(thread)
+    configs = load_llamacpp_configs()
+    threads = sync_threads_with_configs(threads, configs, launch_llamacpp)
 
     logging.info(f"All llama.cpp instances launched")
 
