@@ -16,7 +16,6 @@ import shlex
 from werkzeug.serving import make_server
 import select
 
-
 global llamacpp_configs_dir
 global configs
 global threads
@@ -142,8 +141,6 @@ def load_llamacpp_configs(llamacpp_configs_dir=llamacpp_configs_dir):
                 for config in configs:
                     new_configs.append(config)
     return new_configs
-
-#configs = load_llamacpp_configs()
 
 def purge_thread(thread):
     thread._args[1].set()   # Signal to stop
