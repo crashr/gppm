@@ -119,6 +119,9 @@ def launch_llamacpp(llamacpp_config, stop_event):
 
     env = os.environ.copy()
     env["CUDA_VISIBLE_DEVICES"] = llamacpp_config["cuda_visible_devices"]
+    ### qnd ollama hack
+    env["OLLAMA_DEBUG"] = "1"
+    ### end qnd ollama hack
 
     llamacpp_process = subprocess.Popen(
         llamacpp_cmd,
@@ -139,7 +142,7 @@ def launch_llamacpp(llamacpp_config, stop_event):
             # New data available, read it
             line = llamacpp_process.stdout.readline()
             if pattern.search(line):
-                ### dirty ollama hack
+                ### qnd ollama hack
                 #data = json.loads(line)
                 #data["gppm"] = {
                 #    "llamacpp_pid": llamacpp_process.pid,
@@ -159,7 +162,7 @@ def launch_llamacpp(llamacpp_config, stop_event):
                     }
                     data["tid"] = 0
                     data["msg"] = line
-                ### end ollama hack
+                ### end qnd ollama hack
                 process_line(data)
         else:
             # No new data available, check if the subprocess has terminated
