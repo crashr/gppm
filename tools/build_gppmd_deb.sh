@@ -61,7 +61,7 @@ mkdir -p $DEST_DIR/lib/systemd/system
 # Create the control file
 cat > $DEST_DIR/DEBIAN/control <<EOF
 Package: $PACKAGE_NAME
-Version: $VERSION
+Version: ${VERSION}-${RELEASE}
 Section: base
 Priority: optional
 Architecture: $ARCHITECTURE

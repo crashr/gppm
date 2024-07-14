@@ -58,7 +58,7 @@ mkdir -p $DEST_DIR/usr/share/$PACKAGE_NAME
 # Create the control file
 cat > $DEST_DIR/DEBIAN/control <<EOF
 Package: $PACKAGE_NAME
-Version: $VERSION
+Version: ${VERSION}-${RELEASE}
 Section: base
 Priority: optional
 Architecture: $ARCHITECTURE
