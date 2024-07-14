@@ -139,11 +139,27 @@ def launch_llamacpp(llamacpp_config, stop_event):
             # New data available, read it
             line = llamacpp_process.stdout.readline()
             if pattern.search(line):
-                data = json.loads(line)
-                data["gppm"] = {
-                    "llamacpp_pid": llamacpp_process.pid,
-                    "gppm_cvd": env["CUDA_VISIBLE_DEVICES"],
-                }
+                ### dirty ollama hack
+                #data = json.loads(line)
+                #data["gppm"] = {
+                #    "llamacpp_pid": llamacpp_process.pid,
+                #    "gppm_cvd": env["CUDA_VISIBLE_DEVICES"],
+                #}
+                try:
+                    data = json.loads(line)
+                    data["gppm"] = {
+                        "llamacpp_pid": llamacpp_process.pid,
+                        "gppm_cvd": env["CUDA_VISIBLE_DEVICES"],
+                    }
+                except:
+                    data = {}
+                    data["gppm"] = {
+                        "llamacpp_pid": llamacpp_process.pid,
+                        "gppm_cvd": env["CUDA_VISIBLE_DEVICES"],
+                    }
+                    data["tid"] = 0
+                    data["msg"] = line
+                ### end ollama hack
                 process_line(data)
         else:
             # No new data available, check if the subprocess has terminated
