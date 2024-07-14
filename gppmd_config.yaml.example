@@ -1,7 +1,0 @@
-log_file: '/var/log/gppm/gppmd.log'
-sleep_time: 0.1
-timeout_time: 0.0
-log_file_to_monitor: '/var/log/llama.cpp/llama-server.log'
-host: '0.0.0.0'
-port: 5000
-max_llamacpp_instances: 10
