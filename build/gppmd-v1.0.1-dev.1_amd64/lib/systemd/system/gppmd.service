@@ -1,0 +1,14 @@
+[Unit]
+Description=GPU Power and Performance Manager Daemon
+
+[Service]
+ExecStart=/usr/bin/gppmd
+Restart=always
+User=root
+Group=root
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=gppmd
+
+[Install]
+WantedBy=multi-user.target
