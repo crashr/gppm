@@ -1,0 +1,8 @@
+Package: gppmd
+Version: 1.0.1-dev.2
+Section: base
+Priority: optional
+Architecture: amd64
+Essential: no
+Maintainer: Roni
+Description: GPU Power and Performance Manager daemon

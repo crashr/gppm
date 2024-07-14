@@ -1,0 +1,41 @@
+# To try one of the following examples edit it's configuration and set enable to True.
+# Several can be activated at the same time as long as their configurations do not interfere with each other.
+
+- name: "phi-3-mini-128k-instruct_01"
+  enabled: False
+  type: "llamacpp"
+  command: "/usr/local/bin/llama-server"
+  cuda_visible_devices: "0"
+  options:
+  - --host 0.0.0.0
+  - -ngl 100
+  - -m /models/phi-3-mini-128k-instruct.Q8_0.gguf
+  - --port 8081
+  - -fa
+  - -sm row
+  - -mg 0
+  - --no-mmap
+  - --log-format json
+
+- name: "phi-3-mini-128k-instruct_02"
+  enabled: False
+  type: "llamacpp"
+  command: "/usr/local/bin/llama-server"
+  cuda_visible_devices: "0,1"
+  options:
+  - --host 0.0.0.0
+  - -ngl 100
+  - -m /models/phi-3-mini-128k-instruct.Q8_0.gguf
+  - --port 8082
+  - -fa
+  - -sm row
+  - -mg 0
+  - --no-mmap
+  - --log-format json
+
+- name: "ollama_01"
+  enabled: False
+  type: ollama
+  command: "/usr/local/bin/ollama serve"
+  cuda_visible_devices: "2"
+  options: []
