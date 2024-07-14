@@ -96,3 +96,4 @@ fi
 # Cleanup
 sudo rm -rf ./build/$PACKAGE_NAME
 rm -rf ./$PACKAGE_NAME/venv
+rm -rf ./*.spec
