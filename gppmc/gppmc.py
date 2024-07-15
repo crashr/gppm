@@ -2,6 +2,7 @@ import requests
 import json
 import click
 import click_completion
+from halo import Halo
 
 click_completion.init()
 
@@ -20,19 +21,22 @@ def get_group():
 @get_group.command('instances')
 def get_instances():
     """Get all LlamaCpp instances."""
-    response = requests.get(f"{BASE_URL}/get_llamacpp_instances")
+    with Halo(text='Loading instances', spinner='dots'):
+        response = requests.get(f"{BASE_URL}/get_llamacpp_instances")
     print(json.dumps(response.json(), indent=4))
 
 @get_group.command('configs')
 def get_configs():
     """Get all LlamaCpp configurations."""
-    response = requests.get(f"{BASE_URL}/get_llamacpp_configs")
+    with Halo(text='Loading configurations', spinner='dots'):
+        response = requests.get(f"{BASE_URL}/get_llamacpp_configs")
     print(json.dumps(response.json(), indent=4))
 
 @gppmc.command('reload')
 def reload_configs():
     """Reload LlamaCpp configurations."""
-    response = requests.get(f"{BASE_URL}/reload_llamacpp_configs")
+    with Halo(text='Reloading configurations', spinner='dots'):
+        response = requests.get(f"{BASE_URL}/reload_llamacpp_configs")
     print(json.dumps(response.json(), indent=4))
 
 if __name__ == "__main__":
