@@ -52,7 +52,9 @@ fi
 
 # Create the directory structure
 mkdir -p $DEST_DIR/DEBIAN
+mkdir -p $DEST_DIR/etc/bash_completion.d
 mkdir -p $DEST_DIR/usr/bin
+mkdir -p $DEST_DIR/usr/share/bash-completion/completions
 mkdir -p $DEST_DIR/usr/share/$PACKAGE_NAME
 
 # Create the control file
@@ -74,6 +76,9 @@ pip install -r $PACKAGE_NAME/requirements.txt
 
 # Compile your Python project to a binary
 pyinstaller --hidden-import=requests --onefile $PACKAGE_NAME/$PACKAGE_NAME.py --distpath $DEST_DIR/usr/bin
+
+# Create bash completion file
+_GPPMC_COMPLETE=bash_source $DEST_DIR/usr/bin/$PACKAGE_NAME > $DEST_DIR/usr/share/bash-completion/completions/$PACKAGE_NAME
 
 # Deactivate the virtual environment
 deactivate
