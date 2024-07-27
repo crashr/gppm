@@ -6,3 +6,4 @@ debian
 .env
 venv
 *.spec
+build/
