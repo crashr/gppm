@@ -69,7 +69,7 @@ for gpu in range(num_gpus):
 def process_line(data):
     logging.info(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     gpus = [int(x) for x in data["gppm"]["gppm_cvd"].split(",")]
-    pid = data["gppm"]["llamacpp_pid"]
+    pid = data["gppm"]["llamacpp_pid"]  # FIXME This needs to be changed to work with ollama
     tid = data["tid"]
     logging.info(f"Process {pid} using GPUs {gpus}")
     if "slot is processing task" in data["msg"]:
@@ -119,9 +119,6 @@ def launch_llamacpp(llamacpp_config, stop_event):
 
     env = os.environ.copy()
     env["CUDA_VISIBLE_DEVICES"] = llamacpp_config["cuda_visible_devices"]
-    ### qnd ollama hack
-    env["OLLAMA_DEBUG"] = "1"
-    ### end qnd ollama hack
 
     llamacpp_process = subprocess.Popen(
         llamacpp_cmd,
@@ -142,27 +139,11 @@ def launch_llamacpp(llamacpp_config, stop_event):
             # New data available, read it
             line = llamacpp_process.stdout.readline()
             if pattern.search(line):
-                ### qnd ollama hack
-                #data = json.loads(line)
-                #data["gppm"] = {
-                #    "llamacpp_pid": llamacpp_process.pid,
-                #    "gppm_cvd": env["CUDA_VISIBLE_DEVICES"],
-                #}
-                try:
-                    data = json.loads(line)
-                    data["gppm"] = {
-                        "llamacpp_pid": llamacpp_process.pid,
-                        "gppm_cvd": env["CUDA_VISIBLE_DEVICES"],
-                    }
-                except:
-                    data = {}
-                    data["gppm"] = {
-                        "llamacpp_pid": llamacpp_process.pid,
-                        "gppm_cvd": env["CUDA_VISIBLE_DEVICES"],
-                    }
-                    data["tid"] = 0
-                    data["msg"] = line
-                ### end qnd ollama hack
+                data = json.loads(line)
+                data["gppm"] = {
+                    "llamacpp_pid": llamacpp_process.pid,
+                    "gppm_cvd": env["CUDA_VISIBLE_DEVICES"],
+                }
                 process_line(data)
         else:
             # No new data available, check if the subprocess has terminated
@@ -171,6 +152,73 @@ def launch_llamacpp(llamacpp_config, stop_event):
 
     llamacpp_process.terminate()
     llamacpp_process.wait()
+
+
+def launch_ollama(ollama_config, stop_event):
+    tmp_dir = tempfile.TemporaryDirectory(dir="/tmp")
+    os.makedirs(tmp_dir.name, exist_ok=True)
+    pipe = os.path.join(tmp_dir.name, "pipe")
+    os.mkfifo(pipe)
+
+    ollama_options = []
+
+    for option in ollama_config["options"]:
+        if isinstance(option, dict):
+            pass
+        else:
+            ollama_options.append(str(option))
+
+    ollama_cmd = shlex.split(
+        ollama_config["command"] + " " + " ".join(ollama_options)
+    )
+
+    env = os.environ.copy()
+    env["CUDA_VISIBLE_DEVICES"] = ollama_config["cuda_visible_devices"]
+    env["OLLAMA_DEBUG"] = "1"
+
+    ollama_process = subprocess.Popen(
+        ollama_cmd,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=False,
+        bufsize=1,
+        universal_newlines=True,
+    )
+
+    pattern = re.compile(r"slot is processing task|slot released")
+
+    while not stop_event.is_set():
+        # Wait for data to be available for reading
+        ready_to_read, _, _ = select.select([ollama_process.stdout], [], [], 0.1)
+        if ready_to_read:
+            # New data available, read it
+            line = ollama_process.stdout.readline()
+            #print(line) # FIXME
+            if pattern.search(line):
+                try:
+                    data = json.loads(line)
+                    data["gppm"] = {
+                        "ollama_pid": ollama_process.pid,
+                        "gppm_cvd": env["CUDA_VISIBLE_DEVICES"],
+                    }
+                except:
+                    data = {}
+                    data["gppm"] = {    # FIXME
+                        "llamacpp_pid": ollama_process.pid,
+                        "ollama_pid": ollama_process.pid,
+                        "gppm_cvd": env["CUDA_VISIBLE_DEVICES"],
+                    }
+                    data["tid"] = 0
+                    data["msg"] = line
+                process_line(data)
+        else:
+            # No new data available, check if the subprocess has terminated
+            if ollama_process.poll() is not None:
+                break
+
+    ollama_process.terminate()
+    ollama_process.wait()
 
 
 llamacpp_configs_dir = config.get("llamacpp_configs_dir", "/etc/gppmd/llamacpp_configs")
@@ -229,12 +277,26 @@ def sync_threads_with_configs(threads, configs, launch_llamacpp):
         else:
             if config["enabled"] == True:
                 # Add new thread
-                stop_event = threading.Event()
-                new_thread = threading.Thread(
-                    target=launch_llamacpp, args=(config, stop_event)
-                )
+                stop_event = threading.Event()  # FIXME
+                new_thread = threading.Thread() # FIXME
+
+                if config.get("type", "llamacpp") == "llamacpp":
+                    new_thread = threading.Thread(
+                        target=launch_llamacpp, args=(config, stop_event)
+                    )
+                elif config.get("type") == "ollama":
+                    new_thread = threading.Thread(
+                        target=launch_ollama, args=(config, stop_event)
+                    )
+                else:
+                    # Handle unknown type or default to llamacpp
+                    new_thread = threading.Thread(
+                        target=launch_llamacpp, args=(config, stop_event)
+                    )
+
                 new_thread.start()
                 threads.append(new_thread)
+
     return threads
 
 
