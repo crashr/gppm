@@ -77,7 +77,7 @@ To get started with gppm, follow these steps:
       - --log-format json
       - -c 2048
 
-    - name: "ollama_01"
+    - name: "ollama"
       enabled: True
       type: ollama
       command: "/usr/local/bin/ollama serve"
