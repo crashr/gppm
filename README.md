@@ -29,29 +29,67 @@ To get started with gppm, follow these steps:
     cd gppm
     ```
 
-2. Set up a virtual environment:
+2. Run scripts to built DEB packages:
     ```sh
-    python3 -m venv venv
-    source venv/bin/activate
+    ./tools/build_gppmd_deb.sh
+    ./tools/build_gppmc_deb.sh
     ```
 
-3. Install dependencies:
+3. Install packages:
     ```sh
-    pip install -r requirements.txt
+    sudo dpkg -i ./build/gppm*.deb
+    sudo systemctl daemon-reload
     ```
     
 ## Quickstart
 
 1. Stop any running llama.cpp instances, you will launch them now with gppm
 
-2. Rename one or both llama.cpp example configuration files to .yaml and edit to your needs
-    ```
-    cp llamacpp_configs/codestral.yaml.example llamacpp_configs/codestral.yaml
-    cp llamacpp_configs/2x_replete-coder.yaml.example llamacpp_configs/2x_replete-coder.yaml
+2. Create the file /etc/gppmd/llamacpp_configs/configs.yaml
+   Example (modify to your needs): 
+   ```
+   - name: "codestral"
+     enabled: True
+     command: "/usr/local/bin/llama-server"
+     cuda_visible_devices: "0,1"
+     options:
+     - --host 0.0.0.0
+     - -ngl 100
+     - -m /models/Codestral-22B-v0.1-Q8_0.gguf
+     - --port 8081
+     - -fa
+     - -sm row
+     - -mg 0
+     - --no-mmap
+     - --log-format json
+
+    - name: "Phi-3.1-mini-4k-instruct-Q5_K_M"
+    enabled: True
+    command: "/usr/local/bin/llama-server"
+    cuda_visible_devices: "0,1"
+    options:
+    - --host 0.0.0.0
+    - -ngl 100
+    - -m /models/Phi-3.1-mini-4k-instruct-Q5_K_M.gguf
+    - --port 8082
+    - -fa
+    - -sm row
+    - -mg 0
+    - --no-mmap
+    - --log-format json
+    - -c 2048
+
+    - name: "ollama_01"
+      enabled: True
+      type: ollama
+      command: "/usr/local/bin/ollama serve"
+      cuda_visible_devices: "3"
+      options: []
+  ```
     
 4. Launch all configured llama.cpp instances by running gppmd
     ```sh
-    python3 gppmd.py --llamacpp_configs_dir ./llamacpp_configs
+    sudo systemctl start gppmd
     ```
 
 5. Observe GPU utilization in another terminal
@@ -66,16 +104,17 @@ To get started with gppm, follow these steps:
 
 gppm comes with a cli client.
 ```bash
-python3 gppm.py 
-Usage: gppm.py [OPTIONS] COMMAND [ARGS]...
+$ gppmc
+Usage: gppmc [OPTIONS] COMMAND [ARGS]...
+
+  Group of commands for managing LlamaCpp instances and configurations.
 
 Options:
   --help  Show this message and exit.
 
 Commands:
-  get-llamacpp-configs
-  get-llamacpp-instances
-  reload-llamacpp-configs
+  get     Get various resources.
+  reload  Reload LlamaCpp configurations.
 ```
 
 ## Configuration
