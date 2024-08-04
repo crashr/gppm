@@ -87,23 +87,23 @@ To get started with gppm, follow these steps:
       options: []
   ```
     
-4. Launch all configured llama.cpp instances by running gppmd
+3. Launch all configured llama.cpp instances by running gppmd
     ```sh
-    sudo systemctl start gppmd
+  sudo systemctl start gppmd
     ```
 
-5. Observe GPU utilization in another terminal
+4. Observe GPU utilization in another terminal
     ```sh
     watch -n 0.1 nvidia-smi
     ```
 
-6. Wait for the API or web interface to be up and running and run inference.
+5. Wait for the API or web interface to be up and running and run inference.
 
 
 ## Command line interface
 
-gppm comes with a cli client.
-```bash
+gppm comes with a cli client:
+    ```sh
 $ gppmc
 Usage: gppmc [OPTIONS] COMMAND [ARGS]...
 
@@ -115,7 +115,7 @@ Options:
 Commands:
   get     Get various resources.
   reload  Reload LlamaCpp configurations.
-```
+    ```
 
 ## Configuration
 
