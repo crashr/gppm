@@ -6,5 +6,5 @@ DEST="pc06:~/gppm"
 
 inotifywait -m -r -e modify,create,delete,move "$SRC" --format '%w%f' |
 while read file; do
-    rsync -avz "$SRC" "$DEST" #>> "$LOGFILE" 2>&1
+    rsync -avz --include='build/*.deb' --exclude='build/*' "$SRC" "$DEST" #>> "$LOGFILE" 2>&1
 done
