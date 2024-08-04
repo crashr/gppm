@@ -37,7 +37,7 @@ def reload_configs():
     """Reload LlamaCpp configurations."""
     with Halo(text='Reloading configurations', spinner='dots'):
         response = requests.get(f"{BASE_URL}/reload_llamacpp_configs")
-    print(json.dumps(response.json(), indent=4))
+    #print(json.dumps(response.json(), indent=4))
 
 if __name__ == "__main__":
     gppmc(auto_envvar_prefix='GPPMC')
