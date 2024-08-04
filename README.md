@@ -62,20 +62,20 @@ To get started with gppm, follow these steps:
      - --log-format json
 
     - name: "Phi-3.1-mini-4k-instruct-Q5_K_M"
-    enabled: True
-    command: "/usr/local/bin/llama-server"
-    cuda_visible_devices: "0,1"
-    options:
-    - --host 0.0.0.0
-    - -ngl 100
-    - -m /models/Phi-3.1-mini-4k-instruct-Q5_K_M.gguf
-    - --port 8082
-    - -fa
-    - -sm row
-    - -mg 0
-    - --no-mmap
-    - --log-format json
-    - -c 2048
+      enabled: True
+      command: "/usr/local/bin/llama-server"
+      cuda_visible_devices: "1,2"
+      options:
+      - --host 0.0.0.0
+      - -ngl 100
+      - -m /models/Phi-3.1-mini-4k-instruct-Q5_K_M.gguf
+      - --port 8082
+      - -fa
+      - -sm row
+      - -mg 0
+      - --no-mmap
+      - --log-format json
+      - -c 2048
 
     - name: "ollama_01"
       enabled: True
