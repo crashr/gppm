@@ -86,6 +86,22 @@ EOF
 
 chmod +x $DEST_DIR/DEBIAN/postinst
 
+## Create the postrm script
+#cat > $DEST_DIR/DEBIAN/postrm <<EOF
+##!/bin/sh
+#set -e
+#
+#case "$1" in
+#  remove)
+#    systemctl daemon-reload
+#    ;;
+#  *)
+#    ;;
+#esac
+#EOF
+#
+#chmod +x $DEST_DIR/DEBIAN/postrm
+
 # Create a virtual environment and install dependencies
 #python3 -m venv $DEST_DIR/usr/local/lib/$PACKAGE_NAME/venv
 #source $DEST_DIR/usr/local/lib/$PACKAGE_NAME/venv/bin/activate
