@@ -39,14 +39,14 @@ To get started with gppm, follow these steps:
     ```sh
     sudo dpkg -i ./build/gppm*.deb
     sudo systemctl daemon-reload
+    sudo systemctl enable gppmd
     ```
     
 ## Quickstart
 
 1. Stop any running llama.cpp instances, you will launch them now with gppm
 
-2. Create the file /etc/gppmd/llamacpp_configs/configs.yaml
-   Example (modify to your needs): 
+2. Create the file /etc/gppmd/llamacpp_configs/configs.yaml with the following content (modify to your needs): 
    ```
    - name: "codestral"
      enabled: True
@@ -85,12 +85,12 @@ To get started with gppm, follow these steps:
       command: "/usr/local/bin/ollama serve"
       cuda_visible_devices: "3"
       options: []
-  ```
+   ```
     
 3. Launch all configured llama.cpp instances by running gppmd
-    ```sh
-  sudo systemctl start gppmd
-    ```
+   ```sh
+   sudo systemctl start gppmd
+   ```
 
 4. Observe GPU utilization in another terminal
     ```sh
@@ -103,7 +103,7 @@ To get started with gppm, follow these steps:
 ## Command line interface
 
 gppm comes with a cli client:
-    ```sh
+```sh
 $ gppmc
 Usage: gppmc [OPTIONS] COMMAND [ARGS]...
 
@@ -115,7 +115,7 @@ Options:
 Commands:
   get     Get various resources.
   reload  Reload LlamaCpp configurations.
-    ```
+```
 
 ## Configuration
 
