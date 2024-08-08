@@ -1,5 +1,5 @@
 # gppm
-![gppm-banner-02](https://github.com/user-attachments/assets/3f5a731c-f517-4d17-a23d-b3b5cd144441)
+![gppm-banner](https://github.com/user-attachments/assets/af0a6d7b-818c-476f-b3e3-9217b848c5c7)
 
 
 GPU Power and Performance Manager
