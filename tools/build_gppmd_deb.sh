@@ -29,12 +29,12 @@ then
   exit
 fi
 
-# Ensure the configuration file exists
-if [ ! -f "$PACKAGE_NAME/${PACKAGE_NAME}_config.yaml" ]
-then
-  echo "$PACKAGE_NAME/${PACKAGE_NAME}_config.yaml could not be found"
-  exit
-fi
+## Ensure the configuration file exists
+#if [ ! -f "$PACKAGE_NAME/${PACKAGE_NAME}_config.yaml" ]
+#then
+#  echo "$PACKAGE_NAME/${PACKAGE_NAME}_config.yaml could not be found"
+#  exit
+#fi
 
 # Ensure the requirements.txt file exists
 if [ ! -f "$PACKAGE_NAME/requirements.txt" ]
