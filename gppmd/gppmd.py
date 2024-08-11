@@ -16,6 +16,8 @@ import re
 import shlex
 from werkzeug.serving import make_server
 import select
+import signal
+import sys
 
 global llamacpp_configs_dir
 global configs
@@ -66,15 +68,62 @@ for gpu in range(num_gpus):
     set_pstate([gpu], int(os.getenv("NVIDIA_PSTATE_LOW", "8")), silent=True)
     gpu_semaphores[gpu] = threading.Semaphore(config.get("max_llamacpp_instances", 10))
 
+# attempt to avoid orphaned paddler agent processes, untested
+"""
+def run_post_ready_hooks(config):
+    print("DEBUG: Checking for post ready hooks")
+    processes = []
+    try:
+        for phr_name, phr_command in config["post_ready_hooks"].items():
+            print(f"Executing command: {phr_command}")
+            proc = subprocess.Popen(phr_command, shell=True)
+            processes.append(proc)
 
-def process_line(data):
+        # Continue your main process's work here
+
+    except KeyboardInterrupt:
+        print("Main process interrupted, cleaning up subprocesses")
+        for proc in processes:
+            proc.terminate()
+        sys.exit(1)
+
+    finally:
+        for proc in processes:
+            proc.terminate()
+"""
+
+"""
+def run_post_ready_hooks(config):
+    print("DEBUG: Checking for post ready hooks")
+
+    if "post_ready_hooks" in config:
+        for phr_name, phr_command in config["post_ready_hooks"].items():
+            print(f"Executing command: {phr_command}")
+            subprocess.run(phr_command, shell=True)
+    else:
+        print("No post_ready_hooks defined in the configuration.")
+"""
+
+def run_post_ready_hooks(config):
+    print("DEBUG: Checking for post ready hooks")
+
+    if "post_ready_hooks" in config:
+        for phr_name, phr_command in config["post_ready_hooks"].items():
+            print(f"Executing command: {phr_command}")
+            subprocess.Popen(phr_command, shell=True)
+    else:
+        print("No post_ready_hooks defined in the configuration.")
+
+def process_line(data, config): # Need config for hooks
     logging.info(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     gpus = [int(x) for x in data["gppm"]["gppm_cvd"].split(",")]
     pid = data["gppm"]["llamacpp_pid"]  # FIXME This needs to be changed to work with ollama
     tid = data["tid"]
     logging.info(f"Process {pid} using GPUs {gpus}")
-    if "all slots are idle" in data["msg"]:             # alternative: "HTTP server listening"
-        TODO = "post loaded hooks"
+    print("DEBUG: data msg: " + data["msg"])
+    if "HTTP server listening" in data["msg"]:             # alternative: "HTTP server listening" "all slots are idle"
+        print("DEBUG: All slots are ready")
+        run_post_ready_hooks(config)
     elif "slot is processing task" in data["msg"]:
         logging.info(f"Task {tid} started")
         for gpu in gpus:
@@ -137,7 +186,7 @@ def launch_llamacpp(llamacpp_config, stop_event):
 
     state = 'loading'
 
-    pattern = re.compile(r"slot is processing task|slot released")
+    pattern = re.compile(r"slot is processing task|slot released|all slots are idle|HTTP server listening")
 
     while not stop_event.is_set():
         # Wait for data to be available for reading
@@ -145,13 +194,15 @@ def launch_llamacpp(llamacpp_config, stop_event):
         if ready_to_read:
             # New data available, read it
             line = llamacpp_process.stdout.readline()
+            #if line:
+            #    print("DEBUG: " + line)
             if pattern.search(line):
                 data = json.loads(line)
                 data["gppm"] = {
                     "llamacpp_pid": llamacpp_process.pid,
                     "gppm_cvd": env["CUDA_VISIBLE_DEVICES"],
                 }
-                process_line(data)
+                process_line(data, llamacpp_config)
         else:
             # No new data available, check if the subprocess has terminated
             if llamacpp_process.poll() is not None:
