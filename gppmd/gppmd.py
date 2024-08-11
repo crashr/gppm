@@ -9,6 +9,7 @@ from nvidia_pstate import set_pstate_low, set_pstate_high, set_pstate
 from flask import Flask
 from flask import jsonify
 from flask import render_template
+from flask import request
 import subprocess
 import tempfile
 import re
@@ -22,7 +23,7 @@ global threads
 configs = []
 threads = []
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder=os.path.abspath('/etc/gppmd/templates'))
 app.config["DEBUG"] = True
 
 parser = argparse.ArgumentParser(description="GPU Power and Performance Manager")
@@ -72,7 +73,9 @@ def process_line(data):
     pid = data["gppm"]["llamacpp_pid"]  # FIXME This needs to be changed to work with ollama
     tid = data["tid"]
     logging.info(f"Process {pid} using GPUs {gpus}")
-    if "slot is processing task" in data["msg"]:
+    if "all slots are idle" in data["msg"]:             # alternative: "HTTP server listening"
+        TODO = "post loaded hooks"
+    elif "slot is processing task" in data["msg"]:
         logging.info(f"Task {tid} started")
         for gpu in gpus:
             gpu_semaphores[gpu].acquire(blocking=True)
@@ -105,6 +108,8 @@ def launch_llamacpp(llamacpp_config, stop_event):
     pipe = os.path.join(tmp_dir.name, "pipe")
     os.mkfifo(pipe)
 
+    state = 'unknown'
+
     llamacpp_options = []
 
     for option in llamacpp_config["options"]:
@@ -129,6 +134,8 @@ def launch_llamacpp(llamacpp_config, stop_event):
         bufsize=1,
         universal_newlines=True,
     )
+
+    state = 'loading'
 
     pattern = re.compile(r"slot is processing task|slot released")
 
@@ -174,7 +181,13 @@ def launch_ollama(ollama_config, stop_event):
 
     env = os.environ.copy()
     env["CUDA_VISIBLE_DEVICES"] = ollama_config["cuda_visible_devices"]
+    env["OLLAMA_HOST"]          = ollama_config["ollama_host"]
     env["OLLAMA_DEBUG"] = "1"
+
+    #for env_var in ollama_config["env_vars"]:
+    #for env_var in ollama_config.get("env_vars"):
+    #    for k, v in env_var.items():
+    #        env[k] = v
 
     ollama_process = subprocess.Popen(
         ollama_cmd,
@@ -186,6 +199,9 @@ def launch_ollama(ollama_config, stop_event):
         universal_newlines=True,
     )
 
+    data = {"model": ollama_config["model"], "keep_alive": -1}
+    response = requests.post(f"http://" + ollama_config["ollama_host"] + "/api/generate", data)
+    
     pattern = re.compile(r"slot is processing task|slot released")
 
     while not stop_event.is_set():
@@ -300,6 +316,18 @@ def sync_threads_with_configs(threads, configs, launch_llamacpp):
     return threads
 
 
+@app.route("/apply_llamacpp_configs", methods=["POST"])
+def api_apply_llamacpp_configs():    
+    global configs
+    global threads
+    configs = load_llamacpp_configs()
+    configs_to_apply = request.json
+    for config in configs_to_apply: 
+        configs.append(config)
+    threads = sync_threads_with_configs(threads, configs, launch_llamacpp)
+    return {"status": "OK"}
+
+
 @app.route("/reload_llamacpp_configs", methods=["GET"])
 def api_reload_llamacpp_configs():
     global configs
@@ -327,6 +355,19 @@ def api_get_llamacpp_configs():
 def gui():
     return render_template("home.html")
 
+
+@app.route("/get_instances", methods=["GET"])
+def api_get_instances():
+    instances = {"instances": []}
+    for thread in threads:
+        thread_data = {
+            "name": thread._args[0]["name"],
+            "pid": thread._args[0]["pid"],
+            "cvd": thread._args[0]["cuda_visible_devices"],
+            # add more data if needed
+        }
+        instances["instances"].append(thread_data)
+    return jsonify(instances)
 
 server = make_server("0.0.0.0", 5001, app)
 server_thread = threading.Thread(target=server.serve_forever)
