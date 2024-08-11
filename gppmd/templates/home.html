@@ -2,5 +2,26 @@
 <html lang="en">
   <body>
     Hello, World!
+    <script>
+      function updateInstances() {
+        fetch('/get_instances')
+          .then(response => response.json())
+          .then(data => {
+            const instancesList = document.getElementById('instances-list');
+            instancesList.innerHTML = ''; // clear the list
+            data.instances.forEach(instance => {
+              const listItem = document.createElement('li');
+              listItem.textContent = `Name: ${instance.name}, PID: ${instance.pid}, CVD: ${instance.cvd}`;
+              instancesList.appendChild(listItem);
+            });
+          });
+      }
+      
+      // Call updateInstances immediately
+      updateInstances();
+      
+      // Then call updateInstances every 5 seconds
+      setInterval(updateInstances, 5000);
+      </script>
   </body>
 </html>
