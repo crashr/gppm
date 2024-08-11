@@ -55,6 +55,7 @@ mkdir -p $DEST_DIR/DEBIAN
 mkdir -p $DEST_DIR/usr/bin
 mkdir -p $DEST_DIR/etc/$PACKAGE_NAME
 mkdir -p $DEST_DIR/etc/$PACKAGE_NAME/llamacpp_configs
+mkdir -p $DEST_DIR/etc/$PACKAGE_NAME/templates
 mkdir -p $DEST_DIR/var/log/$PACKAGE_NAME
 mkdir -p $DEST_DIR/lib/systemd/system
 
@@ -117,10 +118,13 @@ pyinstaller --onefile $PACKAGE_NAME/$PACKAGE_NAME.py --distpath $DEST_DIR/usr/bi
 deactivate
 
 # Create a basic configuration file
-cp $PACKAGE_NAME/${PACKAGE_NAME}_config.yaml $DEST_DIR/etc/$PACKAGE_NAME/$PACKAGE_NAME.yaml
+#cp $PACKAGE_NAME/${PACKAGE_NAME}_config.yaml $DEST_DIR/etc/$PACKAGE_NAME/$PACKAGE_NAME.yaml
 
 # Create a basic configuration file
 cp $PACKAGE_NAME/llamacpp_configs/examples.yaml $DEST_DIR/etc/$PACKAGE_NAME/llamacpp_configs/examples.yaml
+
+# Copy template files
+cp $PACKAGE_NAME/templates/* $DEST_DIR/etc/$PACKAGE_NAME/templates/
 
 # Create the systemd service file
 cat > $DEST_DIR/lib/systemd/system/$PACKAGE_NAME.service <<EOF
