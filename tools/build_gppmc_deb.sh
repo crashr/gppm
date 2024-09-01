@@ -11,13 +11,12 @@ do
 done
 
 PACKAGE_NAME="gppmc"
-VERSION="$(cat VERSION)"
-RELEASE="$(cat RELEASE)"
+VERSION="$(git describe --tags --abbrev=0)"
 MAINTAINER="Roni"
-DESCRIPTION="GPU Power and Performance Manager command line tool"
+DESCRIPTION="gppm power process manager command line tool"
 ARCHITECTURE="amd64"
 
-DEST_DIR="build/$PACKAGE_NAME-v$VERSION-${RELEASE}_$ARCHITECTURE"
+DEST_DIR="build/$PACKAGE_NAME-$VERSION-$ARCHITECTURE"
 
 # Clean build dir 
 sudo rm -rf $DEST_DIR
@@ -60,7 +59,7 @@ mkdir -p $DEST_DIR/usr/share/$PACKAGE_NAME
 # Create the control file
 cat > $DEST_DIR/DEBIAN/control <<EOF
 Package: $PACKAGE_NAME
-Version: ${VERSION}-${RELEASE}
+Version: ${VERSION}
 Section: base
 Priority: optional
 Architecture: $ARCHITECTURE
