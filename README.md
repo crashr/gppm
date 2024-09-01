@@ -2,104 +2,101 @@
 ![gppm-banner](https://github.com/user-attachments/assets/af0a6d7b-818c-476f-b3e3-9217b848c5c7)
 
 
-GPU Power and Performance Manager
+gppm power process manager
 
-gppm is designed for use with llama.cpp or llama.cpp based LLM loader and NVIDIA Tesla P40 GPUs. The standalone llama.cpp currently lacks functionality to reduce the power consumption of these GPUs in idle mode. Although there is a patch for llama.cpp, it switches the performance mode for all GPUs simultaneously, which can disrupt setups where multiple llama.cpp instances share one or more GPUs. Implementing a communication mechanism within llama.cpp to manage task distribution and GPU status is complex. gppm addresses this challenge externally, providing a more efficient solution.
+gppm is designed for use with llama.cpp and NVIDIA Tesla P40 GPUs. The standalone llama.cpp currently lacks functionality to reduce the power consumption of these GPUs in idle mode. Although there is a patch for llama.cpp, it switches the performance mode for all GPUs simultaneously, which can disrupt setups where multiple llama.cpp instances share one or more GPUs. Implementing a communication mechanism within llama.cpp to manage task distribution and GPU status is complex. gppm addresses this challenge externally, providing a more efficient solution.
 gppm allows you to define llama.cpp instances as code, enabling automatic spawning, termination, and respawning.
-gppm also supports ollama at the moment but doesn't focus on ollama.
 
   
 ## Table of Contents
 
 - [How it works](#how-it-works)
-- [Installation](#installation)
 - [Quickstart](#quickstart)
+- [Installation](#installation)
 - [Command line interface](#command-line-interface)
+- [Configuration](#configuration)
 
 ## How it works
 
 gppm uses [nvidia-pstate](https://github.com/sasha0552/nvidia-pstate) under the hood which makes it possible to switch the performance state of P40 GPUs at all. gppm must be installed on the host where the GPUs are installed and llama.cpp is running. gppm monitors llama.cpp's output to recognize tasks and on which GPU lama.cpp runs them on and with this information accordingly changes the performance modes of installed P40 GPUs. It can manage any number of GPUs and llama.cpp instances. gppm switches each GPU to a low performance state as soon as none of the existing llama.cpp instances is running a task on that particular GPU and sets it into high performancemode as soon as the next task is going to be run. In doing so, gppm is able to control all GPUs independently of each other. gppm is designed as a wrapper and as such you have all llama.cpp instances configured at one place.
-
-## Installation
-
-To get started with gppm, follow these steps:
-
-1. Clone the repository:
-    ```sh
-    git clone https://github.com/crashr/gppm.git
-    cd gppm
-    ```
-
-2. Run scripts to built DEB packages:
-    ```sh
-    ./tools/build_gppmd_deb.sh
-    ./tools/build_gppmc_deb.sh
-    ```
-
-3. Install packages:
-    ```sh
-    sudo dpkg -i ./build/gppm*.deb
-    sudo systemctl daemon-reload
-    sudo systemctl enable gppmd
-    ```
     
 ## Quickstart
 
-1. Stop any running llama.cpp instances, you will launch them now with gppm
+Clone the repository and cd into it:
 
-2. Create the file /etc/gppmd/llamacpp_configs/configs.yaml with the following content (modify to your needs): 
-   ```
-   - name: "codestral"
-     enabled: True
-     command: "/usr/local/bin/llama-server"
-     cuda_visible_devices: "0,1"
-     options:
-     - --host 0.0.0.0
-     - -ngl 100
-     - -m /models/Codestral-22B-v0.1-Q8_0.gguf
-     - --port 8081
-     - -fa
-     - -sm row
-     - -mg 0
-     - --no-mmap
-     - --log-format json
+```shell
+git clone https://github.com/crashr/gppm
+cd gppm
+```
 
-    - name: "Phi-3.1-mini-4k-instruct-Q5_K_M"
-      enabled: True
-      command: "/usr/local/bin/llama-server"
-      cuda_visible_devices: "1,2"
-      options:
-      - --host 0.0.0.0
-      - -ngl 100
-      - -m /models/Phi-3.1-mini-4k-instruct-Q5_K_M.gguf
-      - --port 8082
-      - -fa
-      - -sm row
-      - -mg 0
-      - --no-mmap
-      - --log-format json
-      - -c 2048
+Edit the following files to your needs:
 
-    - name: "ollama"
-      enabled: True
-      type: ollama
-      command: "/usr/local/bin/ollama serve"
-      cuda_visible_devices: "3"
-      options: []
-   ```
-    
-3. Launch all configured llama.cpp instances by running gppmd
-   ```sh
-   sudo systemctl start gppmd
-   ```
+* gppmd/config.yaml
+* gppmd/llamacpp_configs/examples.yaml 
 
-4. Observe GPU utilization in another terminal
-    ```sh
-    watch -n 0.1 nvidia-smi
-    ```
+In a separate terminal run nvidia-smi to monitor the llama.cpp instances we are going run:
 
-5. Wait for the API or web interface to be up and running and run inference.
+```shell
+watch -n 0.1 nvidia-smi
+```
 
+Run the gppm daemon:
+
+```
+python3 gppmd/gppmd.py --config ./gppmd/config.yaml --llamacpp_configs_dir ./gppmd/llamacpp_configs
+```
+
+Wait for the instances to show up in the nvidia-smi command teminal.
+gppm ships with a command line client (see details below). In another terminal run the cli like this to list the instances you just started:
+
+```shell
+python3 gppmc/gppmc.py get instances
+```
+
+
+## Installation
+
+### Build binaries and DEB package
+
+```shell
+./tools/build_gppmd_deb.sh
+./tools/build_gppmc_deb.sh
+```
+
+You should now find binaries for the daemon and the cli in the build folder:
+
+```shell
+ls -1 build/gppmd-$(git describe --tags --abbrev=0)-amd64/usr/bin/gppmd
+ls -1 build/gppmc-$(git describe --tags --abbrev=0)-amd64/usr/bin/gppmc
+```
+
+Copy them wherever you want or install the DEB packages (described in the next step):
+
+```shell
+ls -1 build/*.deb
+```
+
+### Install DEB package
+
+The DEB packages are tested for teh following dsitributions:
+
+* Ubuntu 22.04
+
+Install the DEB packages like this:
+
+```sh
+sudo dpkg -i build/gppmd-$(git describe --tags --abbrev=0)-amd64.deb
+sudo dpkg -i build/gppmc-$(git describe --tags --abbrev=0)-amd64.deb
+```
+
+gppmd awaits it's config file at /etc/gppmd/config.yaml so put your config there. It can be minimal as this:
+
+```
+host: '0.0.0.0'
+port: 5001
+```
+
+gppmd looks for llama.cpp config files in /etc/gppmd/llamacpp_configs so put your configs there. See below for detailed explaination of how the configuration works.
 
 ## Command line interface
 
