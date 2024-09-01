@@ -105,14 +105,19 @@ gppm comes with a cli client:
 $ gppmc
 Usage: gppmc [OPTIONS] COMMAND [ARGS]...
 
-  Group of commands for managing LlamaCpp instances and configurations.
+  Group of commands for managing llama.cpp instances and configurations.
 
 Options:
-  --help  Show this message and exit.
+  --host TEXT     The host to connect to.
+  --port INTEGER  The port to connect to.
+  --help          Show this message and exit.
 
 Commands:
-  get     Get various resources.
-  reload  Reload LlamaCpp configurations.
+  apply    Apply LlamaCpp configurations from a YAML file.
+  disable  Disable a LlamaCpp instance.
+  enable   Enable a LlamaCpp instance.
+  get      Get various resources.
+  reload   Reload LlamaCpp configurations.
 ```
 
 ## Configuration
