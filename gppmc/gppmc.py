@@ -67,10 +67,10 @@ def get_configs(ctx, format):
     if format == "json":
         print(response.json())
     else:
-        print(response.json())
-        # configs = response.json()["llamacpp_configs"]
-        # for config in configs:
-        #    print(config)
+        # print(response.json())
+        configs = response.json()["llamacpp_configs"]
+        for config in configs:
+            print(config)
 
 
 @gppmc.command("apply")
@@ -90,8 +90,9 @@ def apply_configs(ctx, file, format):
         with Halo(text="Applying configurations", spinner="dots"):
             response = requests.post(f"{base_url}/apply_llamacpp_configs", json=data)
     else:
-        response = requests.post(f"{base_url}/apply_llamacpp_configs", json=data)
-        print(response.json())
+        pass
+        # response = requests.post(f"{base_url}/apply_llamacpp_configs", json=data)
+        # print(response.json())
 
 
 @get_group.command("subprocesses")
@@ -113,7 +114,7 @@ def reload_configs(ctx):
     with Halo(text="Reloading configurations", spinner="dots"):
         response = requests.get(f"{base_url}/reload_llamacpp_configs")
     # print(json.dumps(response.json(), indent=4))  # TODO
-    print(response)
+    # print(response)
 
 
 @gppmc.command("enable")
@@ -127,7 +128,7 @@ def enable_instance(ctx, name):
             f"{base_url}/enable_llamacpp_instance", json={"name": name}
         )
     # print(response.json())
-    print(response)
+    # print(response)
 
 
 @gppmc.command("disable")
@@ -141,7 +142,7 @@ def disable_instance(ctx, name):
             f"{base_url}/disable_llamacpp_instance", json={"name": name}
         )
     # print(response.json())
-    print(response)
+    # print(response)
 
 
 if __name__ == "__main__":
