@@ -1,7 +1,7 @@
 # To try the following examples edit it's configuration and set enabled to True.
 # Multiple can be activated at the same time as long as their configurations do not interfere with each other.
 
-- name: "Biggie_SmolLM_0.15B_Base_q8_0 (llama.cpp 01)"
+- name: Biggie_SmolLM_0.15B_Base_q8_0_01
   enabled: False
   env:
     CUDA_VISIBLE_DEVICES: "0"
@@ -11,18 +11,20 @@
       -ngl 100 \
       -m /models/Biggie_SmolLM_0.15B_Base_q8_0.gguf \
       --port 8061 \
+      -sm none \
       --no-mmap \
       --log-format json"
 
-- name: "Biggie_SmolLM_0.15B_Base_q8_0 (llama.cpp 01)"
+- name: Biggie_SmolLM_0.15B_Base_q8_0_02
   enabled: False
   env:
-    CUDA_VISIBLE_DEVICES: "0"
+    CUDA_VISIBLE_DEVICES: "1"
   command:
     "/usr/local/bin/llama-server \
       --host 0.0.0.0 \
       -ngl 100 \
       -m /models/Biggie_SmolLM_0.15B_Base_q8_0.gguf \
       --port 8062 \
+      -sm none \
       --no-mmap \
       --log-format json"
