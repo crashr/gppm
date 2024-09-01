@@ -229,4 +229,7 @@ gppm allows to configure post launch hooks. With that it is possible to bundle c
         --management-port 8085"
 ```
 
+![image](https://github.com/user-attachments/assets/777e4c96-b960-449e-8647-6f28753d3d8b)
+
+
 ***More to come soon***
