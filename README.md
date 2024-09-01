@@ -78,7 +78,7 @@ ls -1 build/*.deb
 
 ### Install DEB package
 
-The DEB packages are tested for teh following dsitributions:
+The DEB packages are tested for the following dsitributions:
 
 * Ubuntu 22.04
 
