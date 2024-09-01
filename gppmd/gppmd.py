@@ -62,9 +62,9 @@ args = parser.parse_args()
 for key, value in vars(args).items():
     config[key] = value
 
-logging.basicConfig(
-    filename=config.get("log_file", "/var/log/gppmd/gppmd.log"), level=logging.INFO
-)
+# logging.basicConfig(
+#    filename=config.get("log_file", "/var/log/gppmd/gppmd.log"), level=logging.INFO
+# )
 
 result = subprocess.run(
     ["nvidia-smi", "-L"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -77,82 +77,19 @@ for gpu in range(num_gpus):
     gpu_semaphores[gpu] = threading.Semaphore(config.get("max_llamacpp_instances", 10))
 
 
-def run_pre_launch_hooks(config, subprocesses):
-    # print(config)
-    # print("DEBUG: Checking for pre launch hooks")
-
-    if "pre_launch_hooks" in config:
-        for plh_name, plh_command in config["pre_launch_hooks"].items():
-            print(f"Executing command: {plh_command}")
-            with open("/dev/null", "w") as devnull:
-                new_subprocess = subprocess.Popen(
-                    shlex.split(phr_command),
-                    shell=False,
-                    stdout=devnull,
-                    stderr=devnull,
-                )
-            subprocesses.append(new_subprocess)
-    else:
-        print("No pre_launch_hooks defined in the configuration.")
-        pass
-
-
-def run_post_ready_hooks(config, subprocesses):
-    # print(config)
-    # print("DEBUG: Checking for post ready hooks")
-
-    if "post_ready_hooks" in config:
-        for phr_name, phr_command in config["post_ready_hooks"].items():
-            print(f"Executing command: {phr_command}")
-            with open("/dev/null", "w") as devnull:
-                new_subprocess = subprocess.Popen(
-                    shlex.split(phr_command),
-                    shell=False,
-                    stdout=devnull,
-                    stderr=devnull,
-                )
-            subprocesses.append(new_subprocess)
-    else:
-        print("No post_ready_hooks defined in the configuration.")
-        pass
-
-
-def process_line(data, config):  # Need config for hooks
-    logging.info(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-    gpus = [int(x) for x in data["gppm"]["gppm_cvd"].split(",")]
-    pid = data["gppm"][
-        "llamacpp_pid"
-    ]  # TODO This needs to be changed to work with ollama
-    tid = data["tid"]
-    logging.info(f"Process {pid} using GPUs {gpus}")
-    if not "all slots are idle" in data["msg"]:  # do not flood the output with this
-        print("DEBUG: data msg: " + data["msg"])
-    if (
-        "HTTP server listening" in data["msg"]
-    ):  # alternative: "HTTP server listening" "all slots are idle"
-        # print("DEBUG: All slots are ready")
-        pass
-
-    elif "slot is processing task" in data["msg"]:
-        logging.info(f"Task {tid} started")
-        for gpu in gpus:
-            gpu_semaphores[gpu].acquire(blocking=True)
-            logging.info(f"Aquired semaphore for GPU {gpu}")
-        for gpu in gpus:
-            logging.info(f"Setting GPU {gpu} into high performance mode")
-            set_pstate([gpu], int(os.getenv("NVIDIA_PSTATE_HIGH", "16")), silent=True)
-    elif "slot released" in data["msg"]:
-        logging.info(f"Task {tid} terminated")
-        for gpu in gpus:
-            gpu_semaphores[gpu].release()
-            logging.info(f"Released semaphore for GPU {gpu}")
-            if gpu_semaphores[gpu]._value is config.get("max_llamacpp_instances", 10):
-                logging.info(f"Setting GPU {gpu} into low performance mode")
-                set_pstate([gpu], int(os.getenv("NVIDIA_PSTATE_LOW", "8")), silent=True)
-    for gpu, semaphore in gpu_semaphores.items():
-        logging.info(f"Semaphore value for GPU {gpu}: {semaphore._value}")
-    logging.info(f"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-    logging.info(f"")
+def run_post_launch_hooks(config, subprocesses):
+    if "post_launch_hooks" in config:
+        for post_launch_hook in config["post_launch_hooks"]:
+            if post_launch_hook["enabled"]:
+                with open("/dev/null", "w") as devnull:
+                    new_subprocess = subprocess.Popen(
+                        shlex.split(post_launch_hook["command"]),
+                        shell=False,
+                        stdout=devnull,
+                        stderr=devnull,
+                    )
+                subprocesses.append(new_subprocess)
+                run_post_launch_hooks(post_launch_hook, subprocesses)
 
 
 def list_thread_names():
@@ -160,26 +97,59 @@ def list_thread_names():
     return thread_names
 
 
+def process_line(data, config):  # Need config for hooks
+    gpus = [int(x) for x in data["gppm"]["gppm_cvd"].split(",")]
+    pid = data["gppm"][
+        "llamacpp_pid"
+    ]  # TODO This needs to be changed to work with ollama
+    tid = data["tid"]
+    # logging.info(f"Process {pid} using GPUs {gpus}")
+    # if not "all slots are idle" in data["msg"]:  # do not flood the output with this
+    #    print("DEBUG: data msg: " + data["msg"])
+    if (
+        "HTTP server listening" in data["msg"]
+    ):  # alternative: "HTTP server listening" "all slots are idle"
+        # print("DEBUG: All slots are ready")
+        pass
+
+    elif "slot is processing task" in data["msg"]:
+        # logging.info(f"Task {tid} started")
+        for gpu in gpus:
+            gpu_semaphores[gpu].acquire(blocking=True)
+            # logging.info(f"Aquired semaphore for GPU {gpu}")
+        for gpu in gpus:
+            # logging.info(f"Setting GPU {gpu} into high performance mode")
+            set_pstate([gpu], int(os.getenv("NVIDIA_PSTATE_HIGH", "16")), silent=True)
+    elif "slot released" in data["msg"]:
+        # logging.info(f"Task {tid} terminated")
+        for gpu in gpus:
+            gpu_semaphores[gpu].release()
+            # logging.info(f"Released semaphore for GPU {gpu}")
+            if gpu_semaphores[gpu]._value is config.get("max_llamacpp_instances", 10):
+                # logging.info(f"Setting GPU {gpu} into low performance mode")
+                set_pstate([gpu], int(os.getenv("NVIDIA_PSTATE_LOW", "8")), silent=True)
+    # for gpu, semaphore in gpu_semaphores.items():
+    #    logging.info(f"Semaphore value for GPU {gpu}: {semaphore._value}")
+
+
 def launch_llamacpp(llamacpp_config, stop_event):
+    """
     tmp_dir = tempfile.TemporaryDirectory(dir="/tmp")
     os.makedirs(tmp_dir.name, exist_ok=True)
     pipe = os.path.join(tmp_dir.name, "pipe")
     os.mkfifo(pipe)
-
-    llamacpp_options = []
-
-    for option in llamacpp_config["options"]:
-        if isinstance(option, dict):
-            pass
-        else:
-            llamacpp_options.append(str(option))
-
-    llamacpp_cmd = shlex.split(
-        llamacpp_config["command"] + " " + " ".join(llamacpp_options)
-    )
+    """
 
     env = os.environ.copy()
-    env["CUDA_VISIBLE_DEVICES"] = llamacpp_config["cuda_visible_devices"]
+    # env["CUDA_VISIBLE_DEVICES"] = llamacpp_config[
+    #    "cuda_visible_devices"
+    # ]  # TODO remove this
+    if "env" in llamacpp_config:
+        for key, value in llamacpp_config["env"].items():
+            print(f"ENV: {key}:{value}")
+            env[key] = value
+
+    llamacpp_cmd = shlex.split(llamacpp_config["command"])
 
     llamacpp_process = subprocess.Popen(
         llamacpp_cmd,
@@ -194,10 +164,7 @@ def launch_llamacpp(llamacpp_config, stop_event):
     if llamacpp_process.pid not in subprocesses:
         subprocesses[llamacpp_process.pid] = []
 
-    run_post_ready_hooks(llamacpp_config, subprocesses[llamacpp_process.pid])
-
-    # print("DEBUG: subprocesses:")
-    # print(subprocesses)
+    run_post_launch_hooks(llamacpp_config, subprocesses[llamacpp_process.pid])
 
     pattern = re.compile(
         r"slot is processing task|slot released|all slots are idle|HTTP server listening"
@@ -331,7 +298,6 @@ def purge_thread(thread):
 
 
 def sync_threads_with_configs(threads, configs, launch_llamacpp):
-    print("DEBUG: 01")
     existing_config_names = [thread._args[0]["name"] for thread in threads]
 
     # new_config_names = [config['name'] for config in configs]
@@ -347,7 +313,6 @@ def sync_threads_with_configs(threads, configs, launch_llamacpp):
 
     # Add or update threads based on the configs
     for config in configs:
-        print("DEBUG: 02")
         if config["name"] in existing_config_names:  # FIXME is that needed?
             # Update existing thread
             for thread in threads:
@@ -355,9 +320,9 @@ def sync_threads_with_configs(threads, configs, launch_llamacpp):
                     if (
                         thread._args[0] != config or config["enabled"] == False
                     ):  # FIXME does order of options in config file matter?
-                        print("Thread config has changed. Purging thread.")
+                        # print("Thread config has changed. Purging thread.")
                         purge_thread(thread)
-                        print("DEBUG: Purged.")
+                        # print("DEBUG: Purged.")
                         if config["enabled"] == True:
                             stop_event = threading.Event()
                             new_thread = threading.Thread(
