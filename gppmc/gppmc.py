@@ -11,7 +11,7 @@ click_completion.init()
 
 @click.group()
 @click.option("--host", default="localhost", help="The host to connect to.")
-@click.option("--port", default=5001, type=int, help="The port to connect to.")
+@click.option("--port", default=5002, type=int, help="The port to connect to.")
 @click.pass_context
 def gppmc(ctx, host, port):
     """Group of commands for managing LlamaCpp instances and configurations."""
