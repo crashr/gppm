@@ -96,11 +96,18 @@ host: '0.0.0.0'
 port: 5001
 ```
 
-gppmd looks for llama.cpp config files in /etc/gppmd/llamacpp_configs so put your configs there. See below for detailed explaination of how the configuration works.
+gppmd looks for llama.cpp config files in /etc/gppmd/llamacpp_configs so put your configs there (see below for detailed explaination on how the configuration works).
+
+Enable and run the daemon:
+
+```shell
+sudo systemctl enable --now gppmd.service
+```
 
 ## Command line interface
 
-gppm comes with a cli client:
+gppm comes with a cli client. It provides basic functionalities to interact with the daemon:
+
 ```sh
 $ gppmc
 Usage: gppmc [OPTIONS] COMMAND [ARGS]...
@@ -120,6 +127,106 @@ Commands:
   reload   Reload LlamaCpp configurations.
 ```
 
+For some usage example take a look at the configuration section. 
+
 ## Configuration
 
-*Coming soon*
+After changing llama.cpp instance configuration files they can be reloded with the cli:
+
+```shell
+gppmc reload
+```
+
+This affects only instances which configs where changed. All other instances remain untouched.
+
+The most basic configuration for a llama.cpp instance looks like this:
+
+```yaml
+- name: Biggie_SmolLM_0.15B_Base_q8_0_01
+  enabled: True
+  env:
+    CUDA_VISIBLE_DEVICES: "0"
+  command:
+    "/usr/local/bin/llama-server \
+      --host 0.0.0.0 \
+      -ngl 100 \
+      -m /models/Biggie_SmolLM_0.15B_Base_q8_0.gguf \
+      --port 8061 \
+      -sm none \
+      --no-mmap \
+      --log-format json"
+```
+
+To enable gppmd to perform power state switching with NVIDIA Tesla P40 GPUs it is essential to specifiy CUDA_VISIBLE_DEVICES and json log format.
+
+gppm allows to configure post launch hooks. With that it is possible to bundle complex setups. As an example the following configuration creates a setup consisting of two llama.cpp instances running Codestral on three GPUs behind a load balancer. For the load balancer [Paddler](https://github.com/distantmagic/paddler) is used:
+
+```yaml
+- name: "Codestral-22B-v0.1-Q8_0 (paddler balancer)"
+  enabled: True
+  command:
+    "/usr/local/bin/paddler balancer \
+      --management-host 0.0.0.0 \
+      --management-port 8085 \
+      --management-dashboard-enable=true \
+      --reverseproxy-host 192.168.178.56 \
+      --reverseproxy-port 8081"
+
+- name: "Codestral-22B-v0.1-Q8_0 (llama.cpp 01)"
+  enabled: True
+  env:
+    CUDA_VISIBLE_DEVICES: "0,1,2"
+  command:
+    "/usr/local/bin/llama-server \
+      --host 0.0.0.0 \
+      -ngl 100 \
+      -m /models/Codestral-22B-v0.1-Q8_0.gguf \
+      --port 8082 \
+      -fa \
+      -sm row \
+      -mg 0 \
+      --no-mmap \
+      --log-format json"
+  post_launch_hooks:
+  - name: Codestral-22B-v0.1-Q8_0_(paddler_01)
+    enabled: True
+    command:
+      "/usr/local/bin/paddler agent \
+        --name 'Codestral-22B-v0.1-Q8_0 (llama.cpp 01)' \
+        --external-llamacpp-host 192.168.178.56 \
+        --external-llamacpp-port 8082 \
+        --local-llamacpp-host 192.168.178.56 \
+        --local-llamacpp-port 8082 \
+        --management-host 192.168.178.56 \
+        --management-port 8085"
+
+- name: "Codestral-22B-v0.1-Q8_0_(llama.cpp_02)"
+  enabled: True
+  env:
+    CUDA_VISIBLE_DEVICES: "0,1,2"
+  command:
+    "/usr/local/bin/llama-server \
+      --host 0.0.0.0 \
+      -ngl 100 \
+      -m /models/Codestral-22B-v0.1-Q8_0.gguf \
+      --port 8083 \
+      -fa \
+      -sm row \
+      -mg 1 \
+      --no-mmap \
+      --log-format json"
+  post_launch_hooks:
+  - name: "Codestral-22B-v0.1-Q8_0_Paddler_02"
+    enabled: True
+    command:
+      "/usr/local/bin/paddler agent \
+        --name 'Codestral-22B-v0.1-Q8_0 (llama.cpp 02)' \
+        --external-llamacpp-host 192.168.178.56 \
+        --external-llamacpp-port 8083 \
+        --local-llamacpp-host 192.168.178.56 \
+        --local-llamacpp-port 8083 \
+        --management-host 192.168.178.56 \
+        --management-port 8085"
+```
+
+***More to come soon***
