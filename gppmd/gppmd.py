@@ -30,7 +30,7 @@ subprocesses = {}
 app = Flask(__name__, template_folder=os.path.abspath("/etc/gppmd/templates"))
 app.config["DEBUG"] = True
 
-parser = argparse.ArgumentParser(description="GPU Power and Performance Manager")
+parser = argparse.ArgumentParser(description="gppm power process manager")
 parser.add_argument(
     "--config",
     type=str,
@@ -146,7 +146,7 @@ def launch_llamacpp(llamacpp_config, stop_event):
     # ]  # TODO remove this
     if "env" in llamacpp_config:
         for key, value in llamacpp_config["env"].items():
-            print(f"ENV: {key}:{value}")
+            # print(f"ENV: {key}:{value}")
             env[key] = value
 
     llamacpp_cmd = shlex.split(llamacpp_config["command"])
