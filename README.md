@@ -7,6 +7,8 @@ gppm power process manager
 gppm is designed for use with llama.cpp and NVIDIA Tesla P40 GPUs. The standalone llama.cpp currently lacks functionality to reduce the power consumption of these GPUs in idle mode. Although there is a patch for llama.cpp, it switches the performance mode for all GPUs simultaneously, which can disrupt setups where multiple llama.cpp instances share one or more GPUs. Implementing a communication mechanism within llama.cpp to manage task distribution and GPU status is complex. gppm addresses this challenge externally, providing a more efficient solution.
 gppm allows you to define llama.cpp instances as code, enabling automatic spawning, termination, and respawning.
 
+> [!NOTE]
+> Both the configuration and the API will most likely continue to change for a while. When changing to a newer version, please always take a look at the current documentation.
   
 ## Table of Contents
 
