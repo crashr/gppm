@@ -43,19 +43,24 @@ parser.add_argument(
     default="/etc/gppmd/llamacpp_configs",
     help="Path to the llama.cpp configuration file",
 )
-# parser.add_argument(
-#    "--port",
-#    type=int,
-#    default=5002,
-#    help="Port number for the API to listen on",
-# )
+parser.add_argument(
+    "--port",
+    type=int,
+    default=5002,
+    help="Port number for the API to listen on",
+)
 args = parser.parse_args()
 
 with open(args.config, "r") as file:
     config = yaml.safe_load(file)
 
+# for key, value in config.items():
+#    parser.add_argument(f"--{key}", type=type(value), default=value, help=f"Set {key}")
 for key, value in config.items():
-    parser.add_argument(f"--{key}", type=type(value), default=value, help=f"Set {key}")
+    if key != "port":  # Exclude "--port" from the loop
+        parser.add_argument(
+            f"--{key}", type=type(value), default=value, help=f"Set {key}"
+        )
 
 args = parser.parse_args()
 
