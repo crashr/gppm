@@ -156,7 +156,7 @@ The most basic configuration for a llama.cpp instance looks like this:
       --port 8061 \
       -sm none \
       --no-mmap \
-      --log-format json"
+      --log-format json" # Remove this for version >1.2.0 
 ```
 
 To enable gppmd to perform power state switching with NVIDIA Tesla P40 GPUs it is essential to specifiy CUDA_VISIBLE_DEVICES and json log format.
@@ -188,7 +188,7 @@ gppm allows to configure post launch hooks. With that it is possible to bundle c
       -sm row \
       -mg 0 \
       --no-mmap \
-      --log-format json"
+      --log-format json" # Remove this for version >1.2.0
   post_launch_hooks:
   - name: Codestral-22B-v0.1-Q8_0_(paddler_01)
     enabled: True
@@ -216,7 +216,7 @@ gppm allows to configure post launch hooks. With that it is possible to bundle c
       -sm row \
       -mg 1 \
       --no-mmap \
-      --log-format json"
+      --log-format json" # Remove this for version >1.2.0
   post_launch_hooks:
   - name: "Codestral-22B-v0.1-Q8_0_Paddler_02"
     enabled: True
