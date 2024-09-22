@@ -43,19 +43,24 @@ parser.add_argument(
     default="/etc/gppmd/llamacpp_configs",
     help="Path to the llama.cpp configuration file",
 )
-# parser.add_argument(
-#    "--port",
-#    type=int,
-#    default=5002,
-#    help="Port number for the API to listen on",
-# )
+parser.add_argument(
+    "--port",
+    type=int,
+    default=5002,
+    help="Port number for the API to listen on",
+)
 args = parser.parse_args()
 
 with open(args.config, "r") as file:
     config = yaml.safe_load(file)
 
+# for key, value in config.items():
+#    parser.add_argument(f"--{key}", type=type(value), default=value, help=f"Set {key}")
 for key, value in config.items():
-    parser.add_argument(f"--{key}", type=type(value), default=value, help=f"Set {key}")
+    if key != "port":  # Exclude "--port" from the loop
+        parser.add_argument(
+            f"--{key}", type=type(value), default=value, help=f"Set {key}"
+        )
 
 args = parser.parse_args()
 
@@ -98,21 +103,16 @@ def list_thread_names():
 
 
 def process_line(data, config):  # Need config for hooks
+
     gpus = [int(x) for x in data["gppm"]["gppm_cvd"].split(",")]
+
     pid = data["gppm"][
         "llamacpp_pid"
     ]  # TODO This needs to be changed to work with ollama
-    tid = data["tid"]
-    # logging.info(f"Process {pid} using GPUs {gpus}")
-    # if not "all slots are idle" in data["msg"]:  # do not flood the output with this
-    #    print("DEBUG: data msg: " + data["msg"])
-    if (
-        "HTTP server listening" in data["msg"]
-    ):  # alternative: "HTTP server listening" "all slots are idle"
-        # print("DEBUG: All slots are ready")
-        pass
 
-    elif "slot is processing task" in data["msg"]:
+    tid = data["tid"]
+
+    if "processing task" in data["msg"]:
         # logging.info(f"Task {tid} started")
         for gpu in gpus:
             gpu_semaphores[gpu].acquire(blocking=True)
@@ -120,7 +120,7 @@ def process_line(data, config):  # Need config for hooks
         for gpu in gpus:
             # logging.info(f"Setting GPU {gpu} into high performance mode")
             set_pstate([gpu], int(os.getenv("NVIDIA_PSTATE_HIGH", "16")), silent=True)
-    elif "slot released" in data["msg"]:
+    elif "stop processing: " in data["msg"]:
         # logging.info(f"Task {tid} terminated")
         for gpu in gpus:
             gpu_semaphores[gpu].release()
@@ -128,6 +128,7 @@ def process_line(data, config):  # Need config for hooks
             if gpu_semaphores[gpu]._value is config.get("max_llamacpp_instances", 10):
                 # logging.info(f"Setting GPU {gpu} into low performance mode")
                 set_pstate([gpu], int(os.getenv("NVIDIA_PSTATE_LOW", "8")), silent=True)
+
     # for gpu, semaphore in gpu_semaphores.items():
     #    logging.info(f"Semaphore value for GPU {gpu}: {semaphore._value}")
 
@@ -166,24 +167,36 @@ def launch_llamacpp(llamacpp_config, stop_event):
 
     run_post_launch_hooks(llamacpp_config, subprocesses[llamacpp_process.pid])
 
-    pattern = re.compile(
-        r"slot is processing task|slot released|all slots are idle|HTTP server listening"
-    )
+    pattern = re.compile(r"slot .* \| .* \| .+")
 
     while not stop_event.is_set():
         # Wait for data to be available for reading
-        ready_to_read, _, _ = select.select([llamacpp_process.stdout], [], [], 0.1)
+        ready_to_read, _, _ = select.select([llamacpp_process.stderr], [], [], 0.1)
         if ready_to_read:
             # New data available, read it
-            line = llamacpp_process.stdout.readline()
+            line = llamacpp_process.stderr.readline()
             # if line:
-            #    print("DEBUG: " + line)
+            #    print(f"DEBUG line: {line}", end="")
+            #    pass
             if pattern.search(line):
-                data = json.loads(line)
-                data["gppm"] = {
-                    "llamacpp_pid": llamacpp_process.pid,
-                    "gppm_cvd": env["CUDA_VISIBLE_DEVICES"],
+                # FIXME
+                line = line.strip()
+                parts = line.split(" | ")
+                id_slot = 0  # TODO
+                id_task = 0  # TODO
+
+                data = {
+                    "tid": "",
+                    "timestamp": "",
+                    "msg": parts[2],
+                    "id_slot": id_slot,
+                    "id_task": id_task,
+                    "gppm": {
+                        "llamacpp_pid": llamacpp_process.pid,
+                        "gppm_cvd": env["CUDA_VISIBLE_DEVICES"],
+                    },
                 }
+
                 process_line(data, llamacpp_config)
         else:
             # No new data available, check if the subprocess has terminated
