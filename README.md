@@ -188,6 +188,7 @@ gppm allows to configure post launch hooks. With that it is possible to bundle c
       -sm row \
       -mg 0 \
       --no-mmap \
+      --slots \
       --log-format json" # Remove this for version >=1.2.0
   post_launch_hooks:
   - name: Codestral-22B-v0.1-Q8_0_(paddler_01)
